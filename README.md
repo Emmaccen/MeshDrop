@@ -1,6 +1,6 @@
-# MeshFlow
+# MeshDrop
 
-MeshFlow is a browser-based file transfer solution that enables seamless, direct device-to-device file sharing without the need for installation or cloud services. Using WebRTC technology, MeshFlow allows devices on the same network to quickly and securely transfer files of any size while maintaining privacy and cross-platform compatibility.
+MeshDrop is a browser-based file transfer solution that enables seamless, direct device-to-device file sharing without the need for installation or cloud services. Using WebRTC technology, MeshDrop allows devices on the same network to quickly and securely transfer files of any size while maintaining privacy and cross-platform compatibility.
 
 ## Features
 
@@ -17,7 +17,7 @@ MeshFlow is a browser-based file transfer solution that enables seamless, direct
 
 ## How It Works
 
-MeshFlow uses WebRTC data channels to establish peer-to-peer connections between devices on the same network, enabling direct file transfer without intermediary servers. Files are broken down into manageable chunks (15KB) and reassembled on the receiving device, allowing for efficient transfer of files of any size.
+MeshDrop uses WebRTC data channels to establish peer-to-peer connections between devices on the same network, enabling direct file transfer without intermediary servers. Files are broken down into manageable chunks (15KB) and reassembled on the receiving device, allowing for efficient transfer of files of any size.
 
 Connection between devices is established via QR code scanning, ensuring a secure handshake process even in environments with no internet access.
 
@@ -32,7 +32,7 @@ Connection between devices is established via QR code scanning, ensuring a secur
 
 ## Technical Implementation
 
-MeshFlow leverages several modern web technologies:
+MeshDrop leverages several modern web technologies:
 
 - **WebRTC**: For direct peer-to-peer connections
 - **Web Workers**: To maintain transfers in the background
@@ -65,7 +65,7 @@ MeshFlow leverages several modern web technologies:
 
 ## Browser Compatibility
 
-MeshFlow works on all modern browsers that support WebRTC data channels, including:
+MeshDrop works on all modern browsers that support WebRTC data channels, including:
 - Chrome (Desktop & Mobile)
 - Firefox (Desktop & Mobile)
 - Safari (iOS 11+ and macOS 10.13+)
