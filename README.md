@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MeshFlow
+
+MeshFlow is a browser-based file transfer solution that enables seamless, direct device-to-device file sharing without the need for installation or cloud services. Using WebRTC technology, MeshFlow allows devices on the same network to quickly and securely transfer files of any size while maintaining privacy and cross-platform compatibility.
+
+## Features
+
+- **Zero Installation**: Works directly in modern browsers with no apps to download
+- **Cross-Platform**: Share between any devices regardless of operating system
+- **Direct Transfer**: Files move directly between devices, never touching the cloud
+- **Background Processing**: Continue transfers even when navigating away (via Web Workers)
+- **Multiple File Support**: Transfer multiple files simultaneously
+- **OS Agnostic**: Works on Windows, macOS, Linux, iOS, Android, or any device with a modern browser
+- **Privacy-Focused**: No data is stored on external servers
+- **Completely Offline**: Functions without any internet connection
+- **Progressive Web App**: Install on your device for quick access
+- **Familiar Interface**: Designed like popular messaging apps for intuitive use
+
+## How It Works
+
+MeshFlow uses WebRTC data channels to establish peer-to-peer connections between devices on the same network, enabling direct file transfer without intermediary servers. Files are broken down into manageable chunks (15KB) and reassembled on the receiving device, allowing for efficient transfer of files of any size.
+
+Connection between devices is established via QR code scanning, ensuring a secure handshake process even in environments with no internet access.
+
+## Use Cases
+
+- Transfer photos between your phone and laptop without cables or apps
+- Share documents with colleagues on the same network
+- Move files between different operating systems without compatibility issues
+- Exchange files during meetings without email or messaging services
+- Share files during outdoor activities with no internet (camping, field work, etc.)
+- Chat with nearby devices completely offline
+
+## Technical Implementation
+
+MeshFlow leverages several modern web technologies:
+
+- **WebRTC**: For direct peer-to-peer connections
+- **Web Workers**: To maintain transfers in the background
+- **Uint8Array and ArrayBuffer**: For efficient binary data handling
+- **TextEncoder/TextDecoder**: For reliable data identification
+- **Chunked File Processing**: To handle files of any size
+- **Service Workers**: For PWA functionality and background operation
+- **QR Code Generation/Scanning**: For offline device pairing
+
+## Future Plans
+
+- **Mesh Networking Capability**: Relay transfers through intermediate devices to extend range
+- **Resume Capability**: Continue transfers after disconnection
+- **Directory Transfer**: Support for folder structures
+- **End-to-End Encryption**: Additional security layer with optional password protection
+- **Transfer Statistics**: Real-time speed and estimated completion time display
+- **Push Notifications**: Alert users when someone wants to share files, even when the app is in the background
+- **Automatic Discovery**: Optional network-based device discovery alongside manual QR handshakes
+- **Smart TV Support**: Investigate compatibility with WebRTC-capable smart TVs for streaming media
+- **Offline Mesh Networks**: Enable multi-device sharing in completely disconnected environments
 
 ## Getting Started
 
-First, run the development server:
+1. Clone this repository
+2. Run `npm install` to install dependencies
+3. Start the development server with `npm run dev`
+4. Open the application in browsers on multiple devices connected to the same network
+5. Use the QR code to establish a connection between devices
+6. Begin chatting and transferring files
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Browser Compatibility
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+MeshFlow works on all modern browsers that support WebRTC data channels, including:
+- Chrome (Desktop & Mobile)
+- Firefox (Desktop & Mobile)
+- Safari (iOS 11+ and macOS 10.13+)
+- Edge (Chromium-based)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Contributing
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the LICENSE file for details.
