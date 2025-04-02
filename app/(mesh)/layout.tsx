@@ -4,6 +4,7 @@ import { Provider } from "jotai";
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { PageHeader } from "@/components/header";
+import { Toaster } from "@/components/ui/sonner";
 export default function StoreFrontLayout({
   children,
 }: {
@@ -11,9 +12,10 @@ export default function StoreFrontLayout({
 }) {
   return (
     <Provider>
+      <Toaster />
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="">
+        <SidebarInset>
           <PageHeader />
           {children}
         </SidebarInset>
