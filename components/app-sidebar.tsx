@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
 import { DropDownSwitcher } from "@/components/dropdown-switcher";
 import {
   Sidebar,
@@ -14,9 +15,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { Smile } from "lucide-react";
 import { Button } from "./ui/button";
-import { Frown, Smile } from "lucide-react";
-
 const data = {
   versions: ["Offline", "Automated"],
   navMain: [
@@ -37,8 +37,6 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const connected = false;
-
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -68,22 +66,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
-        <div className="flex sm:hidden flex-col gap-2 px-2">
-          <Button
-            variant={connected ? "destructive" : "default"}
-            size="sm"
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            {connected ? (
-              <>
-                <Frown className="h-4 w-4" /> Disconnect
-              </>
-            ) : (
-              <>
-                <Smile className="h-4 w-4" /> Create Connection
-              </>
-            )}
-          </Button>
+        <div className="flex md:hidden flex-col gap-2 px-2">
+          <CreateConnectionUserNameModal>
+            <Button
+              size="sm"
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Smile className="h-4 w-4" /> Create Connection
+            </Button>
+          </CreateConnectionUserNameModal>
+
           <Button variant="outline" size="sm" className="cursor-pointer">
             Join existing connection
           </Button>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Frown, Smile } from "lucide-react";
+import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
 interface FileTransferConnectionStatusProps {
   connected: boolean;
 }
@@ -23,7 +24,7 @@ const FileTransferConnectionStatus = ({
     );
 
   return (
-    <Alert className="rounded-none border-y border-t-0 bg-muted/50">
+    <Alert className="rounded-none border-y border-t-0 bg-sidebar">
       <Frown className="h-4 w-4" />
       <AlertDescription className="flex text-xs sm:text-sm">
         Not connected. Click Connect to start transferring files.
@@ -47,21 +48,14 @@ export const PageHeader = () => {
           </span>
         </div>
         <div className="hidden md:flex items-center gap-2">
-          <Button
-            variant={connected ? "destructive" : "default"}
-            size="sm"
-            className="flex items-center gap-2 cursor-pointer"
-          >
-            {connected ? (
-              <>
-                <Frown className="h-4 w-4" /> Disconnect
-              </>
-            ) : (
-              <>
-                <Smile className="h-4 w-4" /> Create Connection
-              </>
-            )}
-          </Button>
+          <CreateConnectionUserNameModal>
+            <Button
+              size="sm"
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Smile className="h-4 w-4" /> Create Connection
+            </Button>
+          </CreateConnectionUserNameModal>
           <Button variant="outline" size="sm" className="cursor-pointer">
             Join connection
           </Button>
