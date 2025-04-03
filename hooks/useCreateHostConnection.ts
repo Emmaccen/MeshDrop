@@ -2,7 +2,7 @@ import { useHostState } from "@/app/store/host";
 import { toast } from "sonner";
 import { nanoid } from "nanoid";
 export const useCreateHostConnection = () => {
-  const { updateHostStatePartially } = useHostState();
+  const { updateHostStatePartially, currentHostState } = useHostState();
 
   const createHost = async () => {
     const newPeerConnection = new RTCPeerConnection({
@@ -26,11 +26,18 @@ export const useCreateHostConnection = () => {
     try {
       const offer = await newPeerConnection.createOffer();
       await newPeerConnection.setLocalDescription(offer);
+      const userId = nanoid(24);
+      const offerWithMetadata = {
+        type: offer.type,
+        sdp: offer.sdp,
+        id: userId,
+        userName: currentHostState.username,
+      };
       updateHostStatePartially({
-        offer: JSON.stringify(offer),
+        offer: JSON.stringify(offerWithMetadata),
         peerConnection: newPeerConnection,
         dataChannel: newDataChannel,
-        id: nanoid(24),
+        id: userId,
       });
       toast.success("Host connection created successfully");
     } catch (error) {
