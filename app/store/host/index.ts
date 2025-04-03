@@ -9,6 +9,7 @@ export const hostState = atom<HostStateType>({
   connectionState: "new",
   dataChannelReady: false,
   username: null,
+  id: null,
 });
 
 export const useHostState = () => {

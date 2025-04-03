@@ -5,4 +5,5 @@ export interface HostStateType {
   connectionState: RTCPeerConnectionState;
   dataChannelReady: boolean;
   username: string | null;
+  id: string | null;
 }
