@@ -19,8 +19,8 @@ export const CreateConnectionUserNameModal = ({
 }: {
   children: React.JSX.Element;
 }) => {
-  const { updateHostStatePartially } = useHostState();
-  const [username, setUserName] = useState("");
+  const { updateHostStatePartially, currentHostState } = useHostState();
+  const [username, setUserName] = useState(currentHostState.username ?? "");
   const [open, setOpen] = useState(false);
   const { createHost } = useCreateHostConnection();
   return (

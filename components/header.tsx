@@ -4,8 +4,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Frown, Smile } from "lucide-react";
+import { Frown, QrCodeIcon, Smile } from "lucide-react";
 import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
+import { QrCodeResultModal } from "./QrCodeResultModal";
 interface FileTransferConnectionStatusProps {
   connected: boolean;
 }
@@ -47,16 +48,27 @@ export const PageHeader = () => {
             Beta
           </span>
         </div>
-        <div className="hidden md:flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <QrCodeResultModal>
+            <QrCodeIcon
+              role="button"
+              aria-label="View Connection QR Code"
+              className="h-6 w-6 cursor-pointer"
+            />
+          </QrCodeResultModal>
           <CreateConnectionUserNameModal>
             <Button
               size="sm"
-              className="flex items-center gap-2 cursor-pointer"
+              className="hidden md:flex items-center gap-2 cursor-pointer"
             >
               <Smile className="h-4 w-4" /> Create Connection
             </Button>
           </CreateConnectionUserNameModal>
-          <Button variant="outline" size="sm" className="cursor-pointer">
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden md:flex cursor-pointer"
+          >
             Join connection
           </Button>
         </div>
