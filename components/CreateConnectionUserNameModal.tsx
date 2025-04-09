@@ -1,5 +1,7 @@
 "use client";
 import { useHostState } from "@/app/store/host";
+import { useVisibilityState } from "@/app/store/modals";
+import { ModalIds } from "@/app/store/modals/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +10,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useCreateHostConnection } from "@/hooks/useCreateHostConnection";
@@ -21,11 +22,16 @@ export const CreateConnectionUserNameModal = ({
 }) => {
   const { updateHostStatePartially, currentHostState } = useHostState();
   const [username, setUserName] = useState(currentHostState.username ?? "");
-  const [open, setOpen] = useState(false);
   const { createHost } = useCreateHostConnection();
+  const { imVisible, hidePreviousThenShowNext, hideModal } =
+    useVisibilityState();
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog
+      open={imVisible(ModalIds.createConnectionUserNameModal)}
+      onOpenChange={() => hideModal(ModalIds.createConnectionUserNameModal)}
+    >
+      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Username</DialogTitle>
@@ -48,7 +54,10 @@ export const CreateConnectionUserNameModal = ({
                   username: username,
                 });
                 createHost();
-                setOpen(false);
+                hidePreviousThenShowNext(
+                  ModalIds.createConnectionUserNameModal,
+                  ModalIds.qrCodeResultModal
+                );
               }}
               className="cursor-pointer"
             >

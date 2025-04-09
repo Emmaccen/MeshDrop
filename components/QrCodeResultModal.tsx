@@ -1,5 +1,7 @@
 "use client";
 import { useHostState } from "@/app/store/host";
+import { useVisibilityState } from "@/app/store/modals";
+import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
 import {
   Dialog,
@@ -7,9 +9,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState } from "react";
 import QRCode from "react-qr-code";
 export const QrCodeResultModal = ({
   children,
@@ -18,12 +18,15 @@ export const QrCodeResultModal = ({
 }) => {
   const { currentHostState } = useHostState();
   const { currentPeerState } = usePeerState();
-  const [open, setOpen] = useState(false);
+  const { imVisible, hideModal } = useVisibilityState();
 
   if (!currentHostState.offer && !currentPeerState.peerAnswer) return;
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog
+      open={imVisible(ModalIds.qrCodeResultModal)}
+      onOpenChange={() => hideModal(ModalIds.qrCodeResultModal)}
+    >
+      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Connection QR</DialogTitle>

@@ -7,6 +7,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Frown, QrCodeIcon, Smile } from "lucide-react";
 import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
 import { QrCodeResultModal } from "./QrCodeResultModal";
+import { useVisibilityState } from "@/app/store/modals";
+import { ModalIds } from "@/app/store/modals/types";
 interface FileTransferConnectionStatusProps {
   connected: boolean;
 }
@@ -36,7 +38,7 @@ const FileTransferConnectionStatus = ({
 
 export const PageHeader = () => {
   const connected = false;
-
+  const { showModal } = useVisibilityState();
   return (
     <>
       <header className="flex h-16 shrink-0 justify-between items-center border-b px-4 w-full">
@@ -54,12 +56,14 @@ export const PageHeader = () => {
               role="button"
               aria-label="View Connection QR Code"
               className="h-6 w-6 cursor-pointer"
+              onClick={() => showModal(ModalIds.qrCodeResultModal)}
             />
           </QrCodeResultModal>
           <CreateConnectionUserNameModal>
             <Button
               size="sm"
               className="hidden md:flex items-center gap-2 cursor-pointer"
+              onClick={() => showModal(ModalIds.createConnectionUserNameModal)}
             >
               <Smile className="h-4 w-4" /> Create Connection
             </Button>
