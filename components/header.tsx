@@ -1,14 +1,15 @@
 "use client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+import { useVisibilityState } from "@/app/store/modals";
+import { ModalIds } from "@/app/store/modals/types";
+import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
+import { QrCodeResultModal } from "@/components/QrCodeResultModal";
+import { QrScannerModal } from "@/components/QrScannerModal";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Frown, QrCodeIcon, Smile } from "lucide-react";
-import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
-import { QrCodeResultModal } from "./QrCodeResultModal";
-import { useVisibilityState } from "@/app/store/modals";
-import { ModalIds } from "@/app/store/modals/types";
 interface FileTransferConnectionStatusProps {
   connected: boolean;
 }
@@ -68,13 +69,16 @@ export const PageHeader = () => {
               <Smile className="h-4 w-4" /> Create Connection
             </Button>
           </CreateConnectionUserNameModal>
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden md:flex cursor-pointer"
-          >
-            Join connection
-          </Button>
+          <QrScannerModal>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden md:flex cursor-pointer"
+              onClick={() => showModal(ModalIds.qrScannerModal)}
+            >
+              Join connection
+            </Button>
+          </QrScannerModal>
         </div>
       </header>
       <FileTransferConnectionStatus connected={connected} />

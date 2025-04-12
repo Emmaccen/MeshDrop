@@ -47,25 +47,25 @@ export const CreateConnectionUserNameModal = ({
           id="username"
           type="text"
         />
+        <DialogFooter>
+          <Button
+            onClick={() => {
+              if (!username.trim()) return;
+              updateHostStatePartially({
+                username: username,
+              });
+              createHost();
+              hidePreviousThenShowNext(
+                ModalIds.createConnectionUserNameModal,
+                ModalIds.qrCodeResultModal
+              );
+            }}
+            className="cursor-pointer"
+          >
+            Save Username
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogFooter>
-        <Button
-          onClick={() => {
-            if (!username.trim()) return;
-            updateHostStatePartially({
-              username: username,
-            });
-            createHost();
-            hidePreviousThenShowNext(
-              ModalIds.createConnectionUserNameModal,
-              ModalIds.qrCodeResultModal
-            );
-          }}
-          className="cursor-pointer"
-        >
-          Save Username
-        </Button>
-      </DialogFooter>
     </Dialog>
   );
 };
