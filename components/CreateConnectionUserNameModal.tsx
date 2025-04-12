@@ -39,33 +39,33 @@ export const CreateConnectionUserNameModal = ({
             This is only used to identify your connection on other devices or
             peers
           </DialogDescription>
-          <Input
-            value={username}
-            onChange={(e) => setUserName(e.target.value)}
-            className="my-3"
-            id="username"
-            type="text"
-          />
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                if (!username.trim()) return;
-                updateHostStatePartially({
-                  username: username,
-                });
-                createHost();
-                hidePreviousThenShowNext(
-                  ModalIds.createConnectionUserNameModal,
-                  ModalIds.qrCodeResultModal
-                );
-              }}
-              className="cursor-pointer"
-            >
-              Save Username
-            </Button>
-          </DialogFooter>
         </DialogHeader>
+        <Input
+          value={username}
+          onChange={(e) => setUserName(e.target.value)}
+          className="my-3"
+          id="username"
+          type="text"
+        />
       </DialogContent>
+      <DialogFooter>
+        <Button
+          onClick={() => {
+            if (!username.trim()) return;
+            updateHostStatePartially({
+              username: username,
+            });
+            createHost();
+            hidePreviousThenShowNext(
+              ModalIds.createConnectionUserNameModal,
+              ModalIds.qrCodeResultModal
+            );
+          }}
+          className="cursor-pointer"
+        >
+          Save Username
+        </Button>
+      </DialogFooter>
     </Dialog>
   );
 };

@@ -33,25 +33,25 @@ export const QrCodeResultModal = ({
           <DialogDescription className="text-left">
             Share and scan this QR Code to connect with other devices.
           </DialogDescription>
-          {currentHostState.offer && (
-            <div className="bg-white p-2">
-              <QRCode
-                size={256}
-                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                value={currentHostState.offer}
-              />
-            </div>
-          )}
-          {currentPeerState.peerAnswer && (
-            <div className="bg-white p-2">
-              <QRCode
-                size={256}
-                style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                value={currentPeerState.peerAnswer}
-              />
-            </div>
-          )}
         </DialogHeader>
+        {currentHostState.offer && (
+          <div className="bg-white p-2">
+            <QRCode
+              size={256}
+              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+              value={currentHostState.offer}
+            />
+          </div>
+        )}
+        {currentPeerState.peerAnswer && (
+          <div className="bg-white p-2">
+            <QRCode
+              size={256}
+              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+              value={currentPeerState.peerAnswer}
+            />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
