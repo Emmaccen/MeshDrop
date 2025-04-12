@@ -24,7 +24,10 @@ export const QrScannerModal = ({
   return (
     <Dialog
       open={imVisible(ModalIds.qrScannerModal)}
-      onOpenChange={() => hideModal(ModalIds.qrScannerModal)}
+      onOpenChange={() => {
+        stopScanning();
+        hideModal(ModalIds.qrScannerModal);
+      }}
     >
       {children}
       <DialogContent>
