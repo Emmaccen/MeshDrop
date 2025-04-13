@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Frown, QrCodeIcon, Smile } from "lucide-react";
+import { JoinConnectionUserNameModal } from "@/components/JoinConnectionUserNameModal";
 interface FileTransferConnectionStatusProps {
   connected: boolean;
 }
@@ -43,6 +44,7 @@ export const PageHeader = () => {
   return (
     <>
       <header className="flex h-16 shrink-0 justify-between items-center border-b px-4 w-full">
+        <QrScannerModal />
         <div className="flex shrink-0 items-center gap-2 h-full">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
@@ -69,16 +71,16 @@ export const PageHeader = () => {
               <Smile className="h-4 w-4" /> Create Connection
             </Button>
           </CreateConnectionUserNameModal>
-          <QrScannerModal>
+          <JoinConnectionUserNameModal>
             <Button
               variant="outline"
               size="sm"
               className="hidden md:flex cursor-pointer"
-              onClick={() => showModal(ModalIds.qrScannerModal)}
+              onClick={() => showModal(ModalIds.joinConnectionUserNameModal)}
             >
               Join connection
             </Button>
-          </QrScannerModal>
+          </JoinConnectionUserNameModal>
         </div>
       </header>
       <FileTransferConnectionStatus connected={connected} />

@@ -10,17 +10,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useConnect } from "@/hooks/useConnect";
 import { useHandshakeQrScanner } from "@/hooks/useHandshakeQrScanner";
+import { useEffect } from "react";
 
-export const QrScannerModal = ({
-  children,
-}: {
-  children: React.JSX.Element;
-}) => {
+export const QrScannerModal = () => {
   const { currentPeerState } = usePeerState();
   const { imVisible, hideModal } = useVisibilityState();
-  const { isScanning, startScanning, scannerRef, stopScanning } =
+  const { handshake, isScanning, startScanning, scannerRef, stopScanning } =
     useHandshakeQrScanner();
+  const { requestConnection } = useConnect();
+
+  useEffect(() => {
+    if (!handshake) return;
+    requestConnection(JSON.stringify(handshake));
+  }, [handshake]);
+
   return (
     <Dialog
       open={imVisible(ModalIds.qrScannerModal)}
@@ -29,7 +34,6 @@ export const QrScannerModal = ({
         hideModal(ModalIds.qrScannerModal);
       }}
     >
-      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Scan Connection QR</DialogTitle>
