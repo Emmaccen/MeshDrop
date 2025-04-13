@@ -4,6 +4,7 @@ import { useUpdateStore } from "@/app/store/utils/useUpdateStore";
 import { Atom } from "jotai";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { useHandleDataChannelMessages } from "@/hooks/useHandleDataChannelMessages";
 
 interface HostAndPeerCommonProperties
   extends Pick<
@@ -23,6 +24,8 @@ export const useConnectionStateManager = <
 ) => {
   const { updateStore: updateHostAndPeerCommonPropertiesPartially, values } =
     useUpdateStore<T>(atomStore);
+
+  const { handleDataChannelMessage } = useHandleDataChannelMessages(user);
 
   const handlePeerConnectionStateChange = () => {
     console.info("Connection state changed:", values.connectionState);
@@ -65,7 +68,7 @@ export const useConnectionStateManager = <
       handlePeerConnectionStateChange;
     values.dataChannel.onopen = handleDataChannelOpen;
     values.dataChannel.onclose = handleDataChannelClose;
-    values.dataChannel.onmessage = () => null;
+    values.dataChannel.onmessage = handleDataChannelMessage;
     values.dataChannel.onerror = (error) => {
       console.error("Data Channel Error:", error);
       toast.error("Data channel encountered an error.");
