@@ -1,20 +1,16 @@
 import { useMessengerState } from "@/app/store/messenger";
-import { nanoid } from "nanoid";
+import { Message } from "@/app/store/messenger/types";
 import { toast } from "sonner";
 
-export const useHandleDataChannelMessages = (user: string) => {
+export const useHandleDataChannelMessages = () => {
   const { updateMessage } = useMessengerState();
 
   const handleDataChannelMessage = (event: MessageEvent) => {
+    const data: Message = JSON.parse(event.data);
+    console.log(event);
     try {
-      if (typeof event.data === "string") {
-        updateMessage({
-          id: nanoid(24),
-          message: event.data,
-          timestamp: new Date().toISOString(),
-          sender: user,
-          type: "message",
-        });
+      if (data.type === "message") {
+        updateMessage(data);
       } else {
         // Handle binary chunk
       }
