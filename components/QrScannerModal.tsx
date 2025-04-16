@@ -1,4 +1,5 @@
 "use client";
+import { useHostState } from "@/app/store/host";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
@@ -16,14 +17,28 @@ import { useEffect } from "react";
 
 export const QrScannerModal = () => {
   const { currentPeerState } = usePeerState();
-  const { imVisible, hideModal } = useVisibilityState();
+  const { currentHostState } = useHostState();
+  const { imVisible, hideModal, hidePreviousThenShowNext } =
+    useVisibilityState();
   const { handshake, isScanning, startScanning, scannerRef, stopScanning } =
     useHandshakeQrScanner();
-  const { requestConnection } = useConnect();
+  const { requestConnection, acceptIncomingConnectionRequest } = useConnect();
 
   useEffect(() => {
     if (!handshake) return;
-    requestConnection(JSON.stringify(handshake));
+    if (currentHostState.offer) {
+      acceptIncomingConnectionRequest(
+        JSON.stringify(handshake),
+        currentHostState.peerConnection
+      );
+      hideModal(ModalIds.qrScannerModal);
+    } else {
+      requestConnection(JSON.stringify(handshake));
+      hidePreviousThenShowNext(
+        ModalIds.qrScannerModal,
+        ModalIds.qrCodeResultModal
+      );
+    }
   }, [handshake]);
 
   return (
