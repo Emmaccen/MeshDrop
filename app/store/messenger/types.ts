@@ -1,8 +1,9 @@
 export interface Message {
   id: string;
-  message?: string | File;
+  message: string | File;
   timestamp: string;
   sender: string;
+  senderId: string | null;
   type: "message" | "file";
   fileName?: string;
   url?: string;
