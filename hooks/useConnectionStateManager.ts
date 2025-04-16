@@ -9,23 +9,30 @@ import { useHandleDataChannelMessages } from "@/hooks/useHandleDataChannelMessag
 interface HostAndPeerCommonProperties
   extends Pick<
       HostStateType,
-      "dataChannelReady" | "connectionState" | "peerConnection" | "dataChannel"
+      | "dataChannelReady"
+      | "connectionState"
+      | "peerConnection"
+      | "dataChannel"
+      | "username"
     >,
     Pick<
       PeerStateType,
-      "connectionState" | "dataChannelReady" | "peerConnection" | "dataChannel"
+      | "connectionState"
+      | "dataChannelReady"
+      | "peerConnection"
+      | "dataChannel"
+      | "username"
     > {}
 
 export const useConnectionStateManager = <
   T extends HostAndPeerCommonProperties
 >(
-  atomStore: Atom<T>,
-  user: string
+  atomStore: Atom<T>
 ) => {
   const { updateStore: updateHostAndPeerCommonPropertiesPartially, values } =
     useUpdateStore<T>(atomStore);
 
-  const { handleDataChannelMessage } = useHandleDataChannelMessages(user);
+  const { handleDataChannelMessage } = useHandleDataChannelMessages();
 
   const handlePeerConnectionStateChange = () => {
     console.info("Connection state changed:", values.connectionState);
