@@ -5,5 +5,5 @@ export interface PeerStateType {
   connectionState: RTCPeerConnectionState;
   dataChannelReady: boolean;
   username: string | null;
-  id: string | null;
+  userId: string | null;
 }
