@@ -67,16 +67,16 @@ export const useConnect = () => {
   };
 
   const acceptIncomingConnectionRequest = async (
-    incomingConnectionRequest: string,
+    incomingConnectionRequestHandshake: string,
     peerConnection: RTCPeerConnection | null
   ) => {
-    if (!peerConnection || !incomingConnectionRequest) {
+    if (!peerConnection || !incomingConnectionRequestHandshake) {
       toast.error("Unable to process connection request");
       return;
     }
 
     try {
-      const answer = JSON.parse(incomingConnectionRequest);
+      const answer = JSON.parse(incomingConnectionRequestHandshake);
       await peerConnection.setRemoteDescription(
         new RTCSessionDescription(answer)
       );

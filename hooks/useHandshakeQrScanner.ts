@@ -93,6 +93,7 @@ export const useHandshakeQrScanner = () => {
           "Error starting camera: " +
             (err instanceof Error ? err.message : String(err))
         );
+        console.log(err);
         toast.error("Error starting camera");
         setIsScanning(false);
       }
