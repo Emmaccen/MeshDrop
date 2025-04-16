@@ -2,6 +2,7 @@
 import { useHostState } from "@/app/store/host";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
+import { usePeerState } from "@/app/store/peer";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -21,6 +22,7 @@ export const CreateConnectionUserNameModal = ({
   children: React.JSX.Element;
 }) => {
   const { updateHostStatePartially, currentHostState } = useHostState();
+  const { resetPeerState } = usePeerState();
   const [username, setUserName] = useState(currentHostState.username ?? "");
   const { createHost } = useCreateHostConnection();
   const { imVisible, hidePreviousThenShowNext, hideModal } =
@@ -55,6 +57,7 @@ export const CreateConnectionUserNameModal = ({
                 username: username,
               });
               createHost();
+              resetPeerState();
               hidePreviousThenShowNext(
                 ModalIds.createConnectionUserNameModal,
                 ModalIds.qrCodeResultModal

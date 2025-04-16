@@ -1,4 +1,5 @@
 "use client";
+import { useHostState } from "@/app/store/host";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
@@ -20,6 +21,7 @@ export const JoinConnectionUserNameModal = ({
   children: React.JSX.Element;
 }) => {
   const { updatePeerStatePartially, currentPeerState } = usePeerState();
+  const { resetHostState } = useHostState();
   const [username, setUserName] = useState(currentPeerState.username ?? "");
   const { imVisible, hidePreviousThenShowNext, hideModal } =
     useVisibilityState();
@@ -55,6 +57,7 @@ export const JoinConnectionUserNameModal = ({
                 ModalIds.joinConnectionUserNameModal,
                 ModalIds.qrScannerModal
               );
+              resetHostState();
             }}
             className="cursor-pointer"
           >
