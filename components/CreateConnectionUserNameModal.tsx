@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useCreateHostConnection } from "@/hooks/useCreateHostConnection";
 import { useState } from "react";
+import { nanoid } from "nanoid";
 
 export const CreateConnectionUserNameModal = ({
   children,
@@ -55,6 +56,7 @@ export const CreateConnectionUserNameModal = ({
               if (!username.trim()) return;
               updateHostStatePartially({
                 username: username,
+                userId: nanoid(24),
               });
               createHost();
               resetPeerState();

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { nanoid } from "nanoid";
 
 export const JoinConnectionUserNameModal = ({
   children,
@@ -52,6 +53,7 @@ export const JoinConnectionUserNameModal = ({
               if (!username.trim()) return;
               updatePeerStatePartially({
                 username: username,
+                userId: nanoid(24),
               });
               hidePreviousThenShowNext(
                 ModalIds.joinConnectionUserNameModal,
