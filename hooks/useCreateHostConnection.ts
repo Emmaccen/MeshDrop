@@ -1,6 +1,5 @@
 import { useHostState } from "@/app/store/host";
 import { toast } from "sonner";
-import { nanoid } from "nanoid";
 export const useCreateHostConnection = () => {
   const { updateHostStatePartially, currentHostState } = useHostState();
 
@@ -26,18 +25,18 @@ export const useCreateHostConnection = () => {
     try {
       const offer = await newPeerConnection.createOffer();
       await newPeerConnection.setLocalDescription(offer);
-      const userId = nanoid(24);
+      const userId = crypto.randomUUID();
       const offerWithMetadata = {
         type: offer.type,
         sdp: offer.sdp,
-        id: userId,
+        userId,
         userName: currentHostState.username,
       };
       updateHostStatePartially({
         offer: JSON.stringify(offerWithMetadata),
         peerConnection: newPeerConnection,
         dataChannel: newDataChannel,
-        id: userId,
+        userId,
       });
       toast.success("Host connection created successfully");
     } catch (error) {
