@@ -3,12 +3,15 @@ export interface FileManagerStateType {
   transferProgress: number;
 }
 
-export type FileTransferMetadata = {
-  name: string;
-  type: string;
-  size: number;
-  id: string;
-  totalChunks: number;
-  isiOS?: boolean; // Add iOS flag
-  originalType?: string; // Store original file type
-};
+export interface FileTransferMetadata {
+  file?: File;
+  fileName?: string;
+  FileType?: string;
+  url?: string;
+  size?: number;
+  totalChunks?: number;
+  chunkIndex?: number;
+  chunkData?: number[];
+  isiOS?: boolean;
+  originalType?: string;
+}

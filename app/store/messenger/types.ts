@@ -1,13 +1,12 @@
-export interface Message {
+import { FileTransferMetadata } from "@/app/store/fileManager/types";
+
+export interface Message extends FileTransferMetadata {
   id: string;
-  message: string | File;
+  message: string;
   timestamp: string;
   sender: string;
   senderId: string | null;
-  type: "message" | "file";
-  fileName?: string;
-  url?: string;
-  size?: number;
+  messageType: "message" | "file" | "metadata";
 }
 
 export interface MessengerStateType {
