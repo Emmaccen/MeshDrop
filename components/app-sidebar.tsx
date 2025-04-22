@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUserNameModal";
 import { DropDownSwitcher } from "@/components/dropdown-switcher";
 import {
   Sidebar,
@@ -15,28 +14,24 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Smile } from "lucide-react";
-import { Button } from "./ui/button";
+
+import { hostState } from "@/app/store/host";
+import { HostStateType } from "@/app/store/host/types";
+import { useVisibilityState } from "@/app/store/modals";
+import { ModalIds } from "@/app/store/modals/types";
+import { peerState } from "@/app/store/peer";
+import { PeerStateType } from "@/app/store/peer/types";
+import { Button } from "@/components/ui/button";
+import { useConnectionStateManager } from "@/hooks/useConnectionStateManager";
 const data = {
   versions: ["Offline", "Automated"],
-  navMain: [
-    {
-      title: "Connected Peers",
-      items: [
-        {
-          title: "IPhone 14",
-          isActive: false,
-        },
-        {
-          title: "Parlor TV",
-          isActive: false,
-        },
-      ],
-    },
-  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { showModal } = useVisibilityState();
+  const { values: host } = useConnectionStateManager<HostStateType>(hostState);
+  const { values: peer } = useConnectionStateManager<PeerStateType>(peerState);
+
   return (
     <Sidebar {...props}>
       <SidebarHeader>
@@ -46,38 +41,51 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarHeader>
       <SidebarContent>
-        {/* We create a SidebarGroup for each parent. */}
-        {data.navMain.map((item) => (
-          <SidebarGroup key={item.title}>
-            <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {item.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton isActive={item.isActive}>
-                      {item.title}
+        {host.dataChannelReady ||
+          (peer.dataChannelReady && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Connected Peer</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton>
+                      {host.peerConnection
+                        ? peer.username
+                        : peer.peerAnswer
+                        ? host.username
+                        : ""}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
         <div className="flex md:hidden flex-col gap-2 px-2">
-          <CreateConnectionUserNameModal>
-            <Button
-              size="sm"
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <Smile className="h-4 w-4" /> Create Connection
-            </Button>
-          </CreateConnectionUserNameModal>
-
-          <Button variant="outline" size="sm" className="cursor-pointer">
-            Join existing connection
+          <Button
+            size="sm"
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => showModal(ModalIds.createConnectionUserNameModal)}
+          >
+            Create Connection
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex cursor-pointer"
+            onClick={() => showModal(ModalIds.joinConnectionUserNameModal)}
+          >
+            Join connection
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex cursor-pointer"
+            onClick={() => showModal(ModalIds.qrCodeResultModal)}
+          >
+            Show QR Code
           </Button>
         </div>
       </SidebarFooter>

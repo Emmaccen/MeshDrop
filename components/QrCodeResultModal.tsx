@@ -3,6 +3,7 @@ import { useHostState } from "@/app/store/host";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -11,13 +12,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import QRCode from "react-qr-code";
-import { Button } from "@/components/ui/button";
 
-export const QrCodeResultModal = ({
-  children,
-}: {
-  children: React.JSX.Element;
-}) => {
+export const QrCodeResultModal = () => {
   const { currentHostState } = useHostState();
   const { currentPeerState } = usePeerState();
   const { imVisible, hideModal, hidePreviousThenShowNext } =
@@ -29,7 +25,6 @@ export const QrCodeResultModal = ({
       open={imVisible(ModalIds.qrCodeResultModal)}
       onOpenChange={() => hideModal(ModalIds.qrCodeResultModal)}
     >
-      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Connection QR</DialogTitle>

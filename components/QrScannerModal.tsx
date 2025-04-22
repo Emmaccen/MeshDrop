@@ -22,18 +22,19 @@ export const QrScannerModal = () => {
     useVisibilityState();
   const { handshake, isScanning, startScanning, scannerRef, stopScanning } =
     useHandshakeQrScanner();
-  const { requestConnection, acceptIncomingConnectionRequest } = useConnect();
+  const { requestConnectionFromHost, acceptIncomingConnectionRequestFromPeer } =
+    useConnect();
 
   useEffect(() => {
     if (!handshake) return;
     if (currentHostState.offer) {
-      acceptIncomingConnectionRequest(
+      acceptIncomingConnectionRequestFromPeer(
         JSON.stringify(handshake),
         currentHostState.peerConnection
       );
       hideModal(ModalIds.qrScannerModal);
     } else {
-      requestConnection(JSON.stringify(handshake));
+      requestConnectionFromHost(JSON.stringify(handshake));
       hidePreviousThenShowNext(
         ModalIds.qrScannerModal,
         ModalIds.qrCodeResultModal

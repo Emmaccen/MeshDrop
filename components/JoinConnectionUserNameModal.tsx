@@ -15,11 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
-export const JoinConnectionUserNameModal = ({
-  children,
-}: {
-  children: React.JSX.Element;
-}) => {
+export const JoinConnectionUserNameModal = () => {
   const { updatePeerStatePartially, currentPeerState } = usePeerState();
   const { resetHostState } = useHostState();
   const [username, setUserName] = useState(currentPeerState.username ?? "");
@@ -31,7 +27,6 @@ export const JoinConnectionUserNameModal = ({
       open={imVisible(ModalIds.joinConnectionUserNameModal)}
       onOpenChange={() => hideModal(ModalIds.joinConnectionUserNameModal)}
     >
-      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Username</DialogTitle>

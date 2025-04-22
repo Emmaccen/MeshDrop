@@ -16,11 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useCreateHostConnection } from "@/hooks/useCreateHostConnection";
 import { useState } from "react";
 
-export const CreateConnectionUserNameModal = ({
-  children,
-}: {
-  children: React.JSX.Element;
-}) => {
+export const CreateConnectionUserNameModal = () => {
   const { updateHostStatePartially, currentHostState } = useHostState();
   const { resetPeerState } = usePeerState();
   const [username, setUserName] = useState(currentHostState.username ?? "");
@@ -33,7 +29,6 @@ export const CreateConnectionUserNameModal = ({
       open={imVisible(ModalIds.createConnectionUserNameModal)}
       onOpenChange={() => hideModal(ModalIds.createConnectionUserNameModal)}
     >
-      {children}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Username</DialogTitle>
