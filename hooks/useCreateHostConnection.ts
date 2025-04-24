@@ -1,4 +1,5 @@
 import { useHostState } from "@/app/store/host";
+import { OfferMetadata } from "@/app/store/host/types";
 import { toast } from "sonner";
 export const useCreateHostConnection = () => {
   const { updateHostStatePartially, currentHostState } = useHostState();
@@ -26,7 +27,7 @@ export const useCreateHostConnection = () => {
       const offer = await newPeerConnection.createOffer();
       await newPeerConnection.setLocalDescription(offer);
       const userId = crypto.randomUUID();
-      const offerWithMetadata = {
+      const offerWithMetadata: OfferMetadata = {
         type: offer.type,
         sdp: offer.sdp,
         userId,
