@@ -6,4 +6,5 @@ export interface PeerStateType {
   dataChannelReady: boolean;
   username: string | null;
   userId: string | null;
+  connectedUsers: string[];
 }

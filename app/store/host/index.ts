@@ -10,6 +10,7 @@ export const hostState = atomWithReset<HostStateType>({
   dataChannelReady: false,
   username: null,
   userId: null,
+  connectedUsers: [],
 });
 
 export const useHostState = () => {

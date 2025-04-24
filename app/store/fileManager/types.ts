@@ -6,7 +6,7 @@ export interface FileManagerStateType {
 export interface FileTransferMetadata {
   file?: File;
   fileName?: string;
-  FileType?: string;
+  fileType?: string;
   url?: string;
   size?: number;
   totalChunks?: number;

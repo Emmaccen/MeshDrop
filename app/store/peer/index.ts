@@ -12,6 +12,7 @@ export const peerState = atomWithReset<PeerStateType>({
   dataChannelReady: false,
   username: null,
   userId: null,
+  connectedUsers: [],
 });
 
 export const usePeerState = () => {
