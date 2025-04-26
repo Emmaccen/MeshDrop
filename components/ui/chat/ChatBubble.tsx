@@ -3,6 +3,9 @@ import { FileTransferMetadata } from "@/app/store/fileManager/types";
 import { Message } from "@/app/store/messenger/types";
 import { Button } from "@/components/ui/button";
 import { Paperclip } from "lucide-react";
+import { Skeleton } from "../skeleton";
+import { useFileManagerState } from "@/app/store/fileManager";
+import { Progress } from "@/components/ui/progress";
 
 export const ChatBubble = (message: Message) => {
   return (
@@ -16,7 +19,7 @@ export const ChatBubble = (message: Message) => {
           })}
         </span>
       </div>
-      <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 rounded-e-xl rounded-es-xl dark:bg-card bg-gray-100">
+      <div className="flex flex-col max-w-[320px] leading-1.5 p-4 rounded-e-xl rounded-es-xl dark:bg-card bg-gray-100">
         <p className="text-sm font-normal py-2.5 ">{message.message}</p>
       </div>
     </div>
@@ -28,6 +31,7 @@ export const selectAppropriateChatBubble = (message: Message) => {
     case "message":
       return <ChatBubble {...message} />;
     case "file":
+    case "metadata":
       return <FileBubble {...message} />;
     default:
       return <ChatBubble {...message} />;
@@ -49,7 +53,7 @@ export const getFilePreviewComponent = (file: FileTransferMetadata) => {
       <video
         src={url}
         controls
-        className="max-w-full rounded h-full"
+        className="max-w-full rounded h-full max-h-[300px] md:max-h-[600px]"
         // style={{ maxHeight: "300px" }}
       />
     );
@@ -86,6 +90,7 @@ export const getFilePreviewComponent = (file: FileTransferMetadata) => {
 };
 
 export const FileBubble = (message: Message) => {
+  const { currentFileManagerState } = useFileManagerState();
   return (
     <div className="m-2">
       <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -99,28 +104,31 @@ export const FileBubble = (message: Message) => {
       </div>
       <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 rounded-e-xl rounded-es-xl dark:bg-card bg-gray-100">
         <p className="text-sm font-normal py-2.5 ">{message.message}</p>
-        <div className="py-1 ">{getFilePreviewComponent(message)}</div>
-        <div className="flex justify-between gap-2">
-          <div className="me-2">
-            <span className="flex items-center gap-2 text-sm font-medium pb-2">
-              {message.fileName}
-            </span>
-            <span className="flex text-xs font-normal text-gray-500 dark:text-gray-400 gap-2">
-              {returnFileSize(message.size ?? 0)}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-                className="self-center"
-                width="3"
-                height="4"
-                viewBox="0 0 3 4"
-                fill="none"
-              >
-                <circle cx="1.5" cy="2" r="1.5" fill="#6B7280" />
-              </svg>
-              {message.fileType}
-            </span>
-          </div>
+        {!message.url ? (
+          <Skeleton className="h-[200px] md:h-[300px] rounded-xl w-full my-2" />
+        ) : (
+          <div className="py-1 my-2">{getFilePreviewComponent(message)}</div>
+        )}
+
+        <p className="text-xs font-medium mb-2 truncate break-all">
+          {message.fileName}
+        </p>
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex text-xs font-normal text-gray-500 dark:text-gray-400 gap-2">
+            {returnFileSize(message.size ?? 0)}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
+              className="self-center"
+              width="3"
+              height="4"
+              viewBox="0 0 3 4"
+              fill="none"
+            >
+              <circle cx="1.5" cy="2" r="1.5" fill="#6B7280" />
+            </svg>
+            {message.fileType}
+          </span>
           <div className="inline-flex self-center items-center">
             <Button
               variant={"outline"}
@@ -143,6 +151,13 @@ export const FileBubble = (message: Message) => {
             </Button>
           </div>
         </div>
+        {currentFileManagerState[message.id] &&
+          currentFileManagerState[message.id].transferProgress !== 100 && (
+            <Progress
+              className="my-2 "
+              value={currentFileManagerState[message.id].transferProgress}
+            />
+          )}
       </div>
     </div>
   );
