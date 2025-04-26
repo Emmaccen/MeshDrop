@@ -1,11 +1,11 @@
 import { returnFileSize } from "@/app/shared-functions/returnFileSize";
+import { useFileManagerState } from "@/app/store/fileManager";
 import { FileTransferMetadata } from "@/app/store/fileManager/types";
 import { Message } from "@/app/store/messenger/types";
 import { Button } from "@/components/ui/button";
-import { Paperclip } from "lucide-react";
-import { Skeleton } from "../skeleton";
-import { useFileManagerState } from "@/app/store/fileManager";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Paperclip } from "lucide-react";
 
 export const ChatBubble = (message: Message) => {
   return (
