@@ -1,11 +1,13 @@
+import { useHostState } from "@/app/store/host";
+import { OfferMetadata } from "@/app/store/host/types";
 import { usePeerState } from "@/app/store/peer";
 import { toast } from "sonner";
-import { nanoid } from "nanoid";
 
 export const useConnect = () => {
   const { updatePeerStatePartially, currentPeerState } = usePeerState();
+  const { updateHostStatePartially } = useHostState();
 
-  const requestConnection = async (hostOffer: string) => {
+  const requestConnectionFromHost = async (hostOffer: string) => {
     if (!hostOffer) {
       toast.warning("No connection offer detected. Please try again");
       return;
@@ -45,17 +47,18 @@ export const useConnect = () => {
           // new candidate arrived
         } else {
           // candidate gathering completed
-          const userId = nanoid(24);
+          const userId = crypto.randomUUID();
           const answer = newPeerConnection.localDescription;
-          const offerWithMetadata = {
+          const offerWithMetadata: OfferMetadata = {
             type: answer?.type,
             sdp: answer?.sdp,
-            id: userId,
+            userId: userId,
             userName: currentPeerState.username,
           };
           updatePeerStatePartially({
             peerAnswer: JSON.stringify(offerWithMetadata),
             peerConnection: newPeerConnection,
+            connectedUsers: [offerData.userName ?? "Host"],
           });
         }
       };
@@ -66,7 +69,7 @@ export const useConnect = () => {
     }
   };
 
-  const acceptIncomingConnectionRequest = async (
+  const acceptIncomingConnectionRequestFromPeer = async (
     incomingConnectionRequestHandshake: string,
     peerConnection: RTCPeerConnection | null
   ) => {
@@ -76,10 +79,18 @@ export const useConnect = () => {
     }
 
     try {
-      const answer = JSON.parse(incomingConnectionRequestHandshake);
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(answer)
+      const answer: OfferMetadata = JSON.parse(
+        incomingConnectionRequestHandshake
       );
+      await peerConnection.setRemoteDescription(
+        new RTCSessionDescription({
+          type: answer.type!,
+          sdp: answer.sdp,
+        })
+      );
+      updateHostStatePartially({
+        connectedUsers: [answer.userName ?? "Peer"],
+      });
       toast.success(`Connection established`);
     } catch (error) {
       console.error("Error processing answer:", error);
@@ -88,7 +99,7 @@ export const useConnect = () => {
   };
 
   return {
-    requestConnection,
-    acceptIncomingConnectionRequest,
+    requestConnectionFromHost,
+    acceptIncomingConnectionRequestFromPeer,
   };
 };
