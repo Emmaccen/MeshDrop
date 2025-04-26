@@ -23,7 +23,6 @@ export const useHandshakeQrScanner = () => {
       try {
         // Basic validation for WebRTC handshake
         const parsedData = JSON.parse(decodedText);
-        console.log(parsedData);
 
         if (!parsedData.type || !parsedData.sdp) {
           toast.error("Invalid connection format");

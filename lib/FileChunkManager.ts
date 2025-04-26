@@ -29,7 +29,7 @@ class FileChunksManager {
     const fileData = this.fileChunks.get(fileId);
 
     if (message.messageType === "metadata" && !fileData) {
-      console.log("Received metadata and adding to manager: ", message);
+      // console.log("Received metadata and adding to manager: ", message);
       this.fileChunks.set(fileId, {
         chunks: {},
         message,
@@ -76,19 +76,19 @@ class FileChunksManager {
 
   // Get file chunks by ID
   public getFileChunk(fileId: string) {
-    console.log("Getting file chunk: ", this.fileChunks.get(fileId));
+    // console.log("Getting file chunk: ", this.fileChunks.get(fileId));
     return this.fileChunks.get(fileId);
   }
 
   // Remove file entry
   public removeFile(fileId: string) {
-    console.log("Removing file: ", fileId);
+    // console.log("Removing file: ", fileId);
     this.fileChunks.delete(fileId);
   }
 
   // Get entire Map
   public getAllFiles() {
-    console.log("Getting all files: ", this.fileChunks);
+    // console.log("Getting all files: ", this.fileChunks);
     return this.fileChunks;
   }
 }
