@@ -7,7 +7,8 @@ import { toast } from "sonner";
 export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
-  const { updateFileManagerStatePartially } = useFileManagerState();
+  const { updateFileManagerStatePartially, currentFileManagerState } =
+    useFileManagerState();
   const handleDataChannelMessage = (event: MessageEvent) => {
     const data: Message = JSON.parse(event.data);
     try {
@@ -44,7 +45,10 @@ export const useHandleDataChannelMessages = () => {
       } else if (data.messageType === "metadata") {
         fileChunksManager.addChunk(data.id, data);
         updateFileManagerStatePartially({
-          isTransferring: true,
+          [data.id]: {
+            transferProgress: 0,
+            isTransferring: true,
+          },
         });
         addNewMessage(data);
       } else if (data.messageType === "file") {
@@ -68,7 +72,10 @@ export const useHandleDataChannelMessages = () => {
           (finalData.message.chunkIndex! / finalData.message.totalChunks!) *
           100;
         updateFileManagerStatePartially({
-          transferProgress: progress,
+          [data.id]: {
+            transferProgress: progress,
+            isTransferring: true,
+          },
         });
         if (
           finalData &&
@@ -88,10 +95,10 @@ export const useHandleDataChannelMessages = () => {
           const url = URL.createObjectURL(blob);
           updateMessageById(finalData.message.id, { ...data, file, url });
           updateFileManagerStatePartially({
-            isTransferring: false,
-          });
-          updateFileManagerStatePartially({
-            transferProgress: 0,
+            [data.id]: {
+              transferProgress: 100,
+              isTransferring: false,
+            },
           });
           fileChunksManager.removeFile(data.id);
         }
@@ -100,8 +107,13 @@ export const useHandleDataChannelMessages = () => {
       console.error("Error handling message:", error);
       toast.error("An error occurred while handling the message");
       updateFileManagerStatePartially({
-        isTransferring: false,
+        [data.id]: {
+          transferProgress:
+            currentFileManagerState[data.id]?.transferProgress || 0,
+          isTransferring: false,
+        },
       });
+      // throw error;
       // fileChunksManager.removeFile(data.id);
     }
   };

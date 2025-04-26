@@ -16,7 +16,10 @@ export const useTransferFile = () => {
       return;
 
     updateFileManagerStatePartially({
-      isTransferring: true,
+      [message.id]: {
+        transferProgress: 0,
+        isTransferring: true,
+      },
     });
 
     const totalChunks = Math.ceil(message.file.size / CHUNK_SIZE_SAFE_LIMIT);

@@ -20,6 +20,7 @@ export const useSendDataInChunks = () => {
     dataChannel: RTCDataChannel | null,
     message: Message
   ) => {
+    // use dataChannelReady for this check
     if (!dataChannel) return;
     const safeSender = new SafeDataChannelSender(dataChannel);
 
@@ -76,7 +77,10 @@ export const useSendDataInChunks = () => {
           };
           safeSender.enqueue(chunkMessage);
           updateFileManagerStatePartially({
-            transferProgress: ((i + 1) / totalFileChunks) * 100,
+            [message.id]: {
+              transferProgress: ((i + 1) / totalFileChunks) * 100,
+              isTransferring: true,
+            },
           });
         }
         break;

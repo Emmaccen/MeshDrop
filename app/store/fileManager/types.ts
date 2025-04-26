@@ -1,6 +1,8 @@
 export interface FileManagerStateType {
-  isTransferring: boolean;
-  transferProgress: number;
+  [key: string]: {
+    isTransferring: boolean;
+    transferProgress: number;
+  };
 }
 
 export interface FileTransferMetadata {
