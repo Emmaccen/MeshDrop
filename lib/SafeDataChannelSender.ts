@@ -5,23 +5,27 @@ export class SafeDataChannelSender {
   private queue: string[] = [];
   private sending = false;
   private channel: RTCDataChannel;
+  private onMessageSent?: (raw: string) => void;
 
-  constructor(dataChannel: RTCDataChannel, lowThreshold = BUFFER_THRESHOLD) {
+  constructor(
+    dataChannel: RTCDataChannel,
+    lowThreshold = BUFFER_THRESHOLD,
+    onMessageSent?: (raw: string) => void
+  ) {
     this.channel = dataChannel;
     this.channel.bufferedAmountLowThreshold = lowThreshold;
     this.channel.onbufferedamountlow = () => {
       this.tryFlush();
     };
+    this.onMessageSent = onMessageSent;
   }
 
-  // Add JSON-serializable message to queue
   enqueue(message: object) {
     const msgStr = JSON.stringify(message);
     this.queue.push(msgStr);
     this.tryFlush();
   }
 
-  // Try to send as much as possible from the queue
   private tryFlush() {
     if (this.sending) return;
     this.sending = true;
@@ -30,7 +34,7 @@ export class SafeDataChannelSender {
       if (
         this.channel.bufferedAmount >= this.channel.bufferedAmountLowThreshold
       ) {
-        // Wait and retry later
+        // Buffer is full, wait for it to drain
         setTimeout(() => {
           this.sending = false;
           this.tryFlush();
@@ -41,10 +45,11 @@ export class SafeDataChannelSender {
       const nextMessage = this.queue.shift();
       try {
         this.channel.send(nextMessage!);
+        // ✅ Notify progress
+        if (this.onMessageSent) this.onMessageSent(nextMessage!);
       } catch (err) {
         console.error("Failed to send over WebRTC:", err);
         toast.error("An error occurred in the buffer queue");
-        // Re-add to queue?
       }
     }
 
