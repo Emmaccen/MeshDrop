@@ -5,6 +5,7 @@ import { Atom } from "jotai";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { useHandleDataChannelMessages } from "@/hooks/useHandleDataChannelMessages";
+import { useWakeLock } from "@/hooks/useWakeLock";
 
 interface HostAndPeerCommonProperties
   extends Pick<
@@ -33,18 +34,33 @@ export const useConnectionStateManager = <
     useUpdateStore<T>(atomStore);
 
   const { handleDataChannelMessage } = useHandleDataChannelMessages();
+  const {
+    wakeLockActive,
+    wakeLockSupported,
+    requestWakeLock,
+    releaseWakeLock,
+  } = useWakeLock();
 
-  const handlePeerConnectionStateChange = () => {
-    console.info("Connection state changed:", values.connectionState);
-    toast.info(`Connection state: ${values.connectionState}`);
+  const handlePeerConnectionStateChange = (ev: Event) => {
+    const { connectionState } = ev.currentTarget as RTCPeerConnection;
+    console.info("Connection state changed:", connectionState);
+    toast.info(`Connection state: ${connectionState}`);
+    if (connectionState !== "connected") {
+      if (wakeLockActive) {
+        releaseWakeLock();
+      }
+    }
     updateHostAndPeerCommonPropertiesPartially({
-      connectionState: values.connectionState,
+      connectionState: connectionState,
     } as Partial<T>);
   };
 
   const handleDataChannelOpen = () => {
     console.info("Data channel is open!");
     toast.success("Data channel is open");
+    if (wakeLockSupported) {
+      requestWakeLock();
+    }
     updateHostAndPeerCommonPropertiesPartially({
       dataChannelReady: true,
     } as Partial<T>);
@@ -59,20 +75,15 @@ export const useConnectionStateManager = <
   };
 
   useEffect(() => {
-    if (!values.peerConnection || !values.dataChannel) return;
+    if (!values.dataChannel) return;
 
     // Set initial states
 
     updateHostAndPeerCommonPropertiesPartially({
       dataChannelReady: values.dataChannel.readyState === "open",
     } as Partial<T>);
-    updateHostAndPeerCommonPropertiesPartially({
-      dataChannelReady: true,
-    } as Partial<T>);
 
     // Add event listeners
-    values.peerConnection.onconnectionstatechange =
-      handlePeerConnectionStateChange;
     values.dataChannel.onopen = handleDataChannelOpen;
     values.dataChannel.onclose = handleDataChannelClose;
     values.dataChannel.onmessage = handleDataChannelMessage;
@@ -81,29 +92,37 @@ export const useConnectionStateManager = <
       toast.error("Data channel encountered an error.");
     };
 
-    // Cleanup function
     return () => {
-      if (values.peerConnection && values.dataChannel) {
-        values.peerConnection.onconnectionstatechange = null;
+      if (values.dataChannel) {
         values.dataChannel.onopen = null;
         values.dataChannel.onclose = null;
         values.dataChannel.onmessage = null;
-      }
 
-      if (values.peerConnection) {
-        values.peerConnection.close();
-        updateHostAndPeerCommonPropertiesPartially({
-          peerConnection: null,
-        } as Partial<T>);
-      }
-      if (values.dataChannel) {
         updateHostAndPeerCommonPropertiesPartially({
           dataChannel: null,
         } as Partial<T>);
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values.dataChannel, values.peerConnection]);
+  }, [values.dataChannel]);
+
+  useEffect(() => {
+    if (!values.peerConnection) return;
+
+    values.peerConnection.onconnectionstatechange =
+      handlePeerConnectionStateChange;
+
+    return () => {
+      if (values.peerConnection) {
+        values.peerConnection.onconnectionstatechange = null;
+        values.peerConnection.close();
+        updateHostAndPeerCommonPropertiesPartially({
+          peerConnection: null,
+        } as Partial<T>);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [values.peerConnection]);
 
   return { values };
 };
