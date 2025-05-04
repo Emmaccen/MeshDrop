@@ -22,7 +22,6 @@ export const useSendDataInChunks = () => {
   ) => {
     // use dataChannelReady for this check
     if (!dataChannel) return;
-    const safeSender = new SafeDataChannelSender(dataChannel);
 
     switch (message.messageType) {
       case "message":
@@ -35,6 +34,23 @@ export const useSendDataInChunks = () => {
           dataChannel.send(JSON.stringify(message));
           return;
         }
+        let messageChunksSent = 0;
+        const MessageSafeSender = new SafeDataChannelSender(
+          dataChannel,
+          undefined,
+          (message) => {
+            const parsed = JSON.parse(message) as Message;
+            if (parsed.messageType === "file") {
+              messageChunksSent++;
+              updateFileManagerStatePartially({
+                [parsed.id]: {
+                  transferProgress: (messageChunksSent / totalFileChunks) * 100,
+                  isTransferring: true,
+                },
+              });
+            }
+          }
+        );
 
         // Send each chunk with metadata
         // Potential 🐛 here if you edit without thinking, if user sends 10k emojis and we've calc/assumed size for CHUNK_SIZE_SAFE_LIMIT above
@@ -53,7 +69,7 @@ export const useSendDataInChunks = () => {
             totalChunks,
           };
 
-          safeSender.enqueue(messageData);
+          MessageSafeSender.enqueue(messageData);
         }
         break;
       case "file":
@@ -62,7 +78,23 @@ export const useSendDataInChunks = () => {
 
         const file = message.file;
         const totalFileChunks = Math.ceil(file.size / CHUNK_SIZE_SAFE_LIMIT);
-
+        let fileChunksSent = 0;
+        const safeSender = new SafeDataChannelSender(
+          dataChannel,
+          undefined,
+          (message) => {
+            const parsed = JSON.parse(message) as Message;
+            if (parsed.messageType === "file") {
+              fileChunksSent++;
+              updateFileManagerStatePartially({
+                [parsed.id]: {
+                  transferProgress: (fileChunksSent / totalFileChunks) * 100,
+                  isTransferring: true,
+                },
+              });
+            }
+          }
+        );
         for (let i = 0; i < totalFileChunks; i++) {
           const slice = file.slice(
             i * CHUNK_SIZE_SAFE_LIMIT,
@@ -76,12 +108,6 @@ export const useSendDataInChunks = () => {
             totalChunks: totalFileChunks,
           };
           safeSender.enqueue(chunkMessage);
-          updateFileManagerStatePartially({
-            [message.id]: {
-              transferProgress: ((i + 1) / totalFileChunks) * 100,
-              isTransferring: true,
-            },
-          });
         }
         break;
 
