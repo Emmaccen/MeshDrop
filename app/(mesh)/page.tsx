@@ -210,6 +210,15 @@ export default function Page() {
         </DialogContent>
       </Dialog>
       <div className="w-full max-w-[800px] mx-auto mb-6 px-5">
+        {host.connectionState !== "connected" &&
+          peer.connectionState !== "connected" &&
+          !!currentMessengerState.messages.length && (
+            <div className="flex justify-center items-center">
+              <p className="text-sm bg-destructive p-2 rounded-lg mb-2">
+                Unable to establish connection to other device. Please reconnect
+              </p>
+            </div>
+          )}
         <div className="rounded-b-lg w-full">
           <form
             onSubmit={(e) => {
