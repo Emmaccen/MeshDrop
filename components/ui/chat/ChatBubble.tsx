@@ -82,9 +82,15 @@ export const getFilePreviewComponent = (file: FileTransferMetadata) => {
     <a
       href={url}
       download={file.fileName}
-      className="inline-flex items-center gap-2 px-4 py-2 rounded"
+      target="_blank"
+      className="flex items-center gap-2 px-4 py-2 rounded"
     >
-      <Paperclip className="h-5 w-5" /> <span>{file.fileName}</span>
+      <span>
+        <Paperclip className="h-5 w-5" />
+      </span>{" "}
+      <span className="text-sm font-medium truncate break-all text-ellipsis">
+        {file.fileName}
+      </span>
     </a>
   );
 };
@@ -129,27 +135,29 @@ export const FileBubble = (message: Message) => {
             </svg>
             {message.fileType}
           </span>
-          <div className="inline-flex self-center items-center">
-            <Button
-              variant={"outline"}
-              asChild
-              aria-label={`Download ${message.fileName}`}
-              className="inline-flex self-center items-center p-2 text-sm font-medium text-center rounded-lg focus:ring-4 focus:outline-none focus:ring-gray-50 dark:focus:ring-gray-600"
-            >
-              <a download={message.fileName} href={message.url ?? ""}>
-                <svg
-                  className="w-4 h-4 text-gray-900 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z" />
-                  <path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-                </svg>
-              </a>
-            </Button>
-          </div>
+          {message.url && (
+            <div className="inline-flex self-center items-center">
+              <Button
+                variant={"outline"}
+                asChild
+                aria-label={`Download ${message.fileName}`}
+                className="inline-flex self-center items-center p-2 text-sm font-medium text-center rounded-lg focus:ring-4 focus:outline-none focus:ring-gray-50 dark:focus:ring-gray-600"
+              >
+                <a download={message.fileName} href={message.url ?? ""}>
+                  <svg
+                    className="w-4 h-4 text-gray-900 dark:text-white"
+                    aria-hidden="true"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z" />
+                    <path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
+                  </svg>
+                </a>
+              </Button>
+            </div>
+          )}
         </div>
         {currentFileManagerState[message.id] &&
           currentFileManagerState[message.id].transferProgress !== 100 && (
