@@ -33,7 +33,7 @@ export const QrCodeResultModal = () => {
           </DialogDescription>
         </DialogHeader>
         {currentHostState.offer && (
-          <div className="bg-white p-2">
+          <div className="bg-white p-6 rounded-md">
             <QRCode
               size={256}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
@@ -42,7 +42,7 @@ export const QrCodeResultModal = () => {
           </div>
         )}
         {currentPeerState.peerAnswer && (
-          <div className="bg-white p-2">
+          <div className="bg-white p-6 rounded-md">
             <QRCode
               size={256}
               style={{ height: "auto", maxWidth: "100%", width: "100%" }}
