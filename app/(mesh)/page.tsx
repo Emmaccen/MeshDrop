@@ -17,7 +17,7 @@ import { useConnectionStateManager } from "@/hooks/useConnectionStateManager";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { useTransferFile } from "@/hooks/useTransferFile";
 import { Paperclip, SendHorizontal } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
 import {
@@ -36,11 +36,17 @@ export default function Page() {
   const { values: peer } = useConnectionStateManager<PeerStateType>(peerState);
   const { currentMessengerState } = useMessengerState();
   const { showModal, imVisible, hideModal } = useVisibilityState();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  // const [isWho, setIsWho] = useState<"host" | "peer" | "unknown">("unknown");
   const { startTransfer } = useTransferFile();
 
+  useEffect(() => {
+    if (scrollAreaRef.current && !message.length) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
+  }, [currentMessengerState.messages.length]);
   const send = () => {
     const id = crypto.randomUUID();
     if (host.peerConnection)
@@ -151,7 +157,10 @@ export default function Page() {
 
   return (
     <>
-      <ScrollArea className="flex-1 overflow-y-auto py-6 px-5 w-full max-w-[800px] mx-auto">
+      <ScrollArea
+        viewPortRef={scrollAreaRef}
+        className="flex-1 overflow-y-auto py-6 px-5 w-full max-w-[800px] mx-auto"
+      >
         {currentMessengerState.messages.length > 0 && (
           <div className="flex flex-col gap-2">
             {currentMessengerState.messages.map((message) => {
@@ -249,13 +258,18 @@ export default function Page() {
               onChange={(e) => setMessage(e.target.value)}
               value={message}
               onKeyUp={(e) => {
-                if (e.key !== "Enter") return;
-                send();
+                if (e.key === "Enter" && !e.shiftKey) send();
               }}
               autoComplete="off"
               name="message"
+              ref={inputRef}
+              onHeightChange={(height, {}) => {
+                if (!inputRef.current) return;
+                if (height >= 140) inputRef.current.style.overflowY = "auto";
+                else inputRef.current.style.overflowY = "hidden";
+              }}
               placeholder="Send message..."
-              className="flex h-16 max-h-24 w-full resize-none border items-center overflow-hidden rounded-lg px-14 py-[22px] text-sm outline-none placeholder:text-primary/60 focus:ring-1 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed  disabled:opacity-50  sm:text-base"
+              className="flex h-16 max-h-24 w-full resize-none border items-center overflow-hidden rounded-lg px-14 py-[22px] text-base outline-none placeholder:text-primary/60 focus:ring-1 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed  disabled:opacity-50"
             />
             <div className="absolute right-3 flex items-center">
               <button
