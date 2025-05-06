@@ -2,6 +2,25 @@
   "name": "meshdrop",
   "version": "0.1.0",
   "private": true,
+  "description": "Offline-first file sharing powered by WebRTC and P2P. Works over local Wi-Fi, even without internet.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Emmaccen/MeshDrop"
+  },
+  "author": "Lucius Emmanuel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Emmaccen/MeshDrop/issues"
+  },
+  "homepage": "https://meshdrop.vercel.app/",
+  "keywords": [
+    "webrtc",
+    "file-sharing",
+    "javascript",
+    "peer-to-peer",
+    "p2p",
+    "pwa"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -42,6 +61,5 @@
     "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
+  }
 }
