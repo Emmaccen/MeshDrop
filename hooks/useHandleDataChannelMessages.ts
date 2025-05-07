@@ -3,10 +3,13 @@ import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
 import FileChunksManager from "@/lib/FileChunkManager";
 import { toast } from "sonner";
+import { useVisibilityNotification } from "./useVisibilityNotification";
 
 export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
+  const { notifyIfPageHiddenOrInBackground } = useVisibilityNotification();
+
   const { updateFileManagerStatePartially, currentFileManagerState } =
     useFileManagerState();
   const handleDataChannelMessage = (event: MessageEvent) => {
@@ -42,6 +45,10 @@ export const useHandleDataChannelMessages = () => {
             fileChunksManager.removeFile(data.id);
           }
         }
+        notifyIfPageHiddenOrInBackground({
+          title: "New message received",
+          body: data.message,
+        });
       } else if (data.messageType === "metadata") {
         fileChunksManager.addChunk(data.id, data);
         updateFileManagerStatePartially({
@@ -101,6 +108,10 @@ export const useHandleDataChannelMessages = () => {
             },
           });
           fileChunksManager.removeFile(data.id);
+          notifyIfPageHiddenOrInBackground({
+            title: "New file received",
+            body: data.fileName,
+          });
         }
       }
     } catch (error) {
