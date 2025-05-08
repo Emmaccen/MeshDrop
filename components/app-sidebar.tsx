@@ -21,7 +21,10 @@ import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
 import { Button } from "@/components/ui/button";
 const data = {
-  versions: ["Offline", "Automated"],
+  connectionMode: [
+    { mode: "Offline", enable: true },
+    { mode: "Automated", enable: false },
+  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -33,8 +36,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props}>
       <SidebarHeader>
         <DropDownSwitcher
-          versions={data.versions}
-          defaultVersion={data.versions[0]}
+          mode={data.connectionMode}
+          defaultMode={data.connectionMode[0]}
         />
       </SidebarHeader>
       <SidebarContent>

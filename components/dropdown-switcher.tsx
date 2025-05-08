@@ -15,14 +15,16 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+type Mode = { mode: string; enable: boolean };
 export function DropDownSwitcher({
-  versions,
-  defaultVersion,
+  mode,
+  defaultMode,
 }: {
-  versions: string[];
-  defaultVersion: string;
+  mode: Mode[];
+  defaultMode: Mode;
 }) {
-  const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion);
+  const [selectedVersion, setSelectedVersion] =
+    React.useState<Mode>(defaultMode);
 
   return (
     <SidebarMenu>
@@ -35,7 +37,7 @@ export function DropDownSwitcher({
             >
               <div className="flex flex-col gap-0.5 leading-none">
                 <span className="font-medium">Discovery Mode</span>
-                <span className="">{selectedVersion}</span>
+                <span className="">{selectedVersion.enable}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -44,13 +46,16 @@ export function DropDownSwitcher({
             className="w-(--radix-dropdown-menu-trigger-width)"
             align="start"
           >
-            {versions.map((version) => (
+            {mode.map((mode) => (
               <DropdownMenuItem
-                key={version}
-                onSelect={() => setSelectedVersion(version)}
+                disabled={!mode.enable}
+                key={mode.mode}
+                onSelect={() => setSelectedVersion(mode)}
               >
-                {version}{" "}
-                {version === selectedVersion && <Check className="ml-auto" />}
+                {mode.mode}{" "}
+                {mode.mode === selectedVersion.mode && (
+                  <Check className="ml-auto" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
