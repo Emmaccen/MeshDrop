@@ -15,22 +15,19 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-import { hostState } from "@/app/store/host";
-import { HostStateType } from "@/app/store/host/types";
+import { useHostState } from "@/app/store/host";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
-import { peerState } from "@/app/store/peer";
-import { PeerStateType } from "@/app/store/peer/types";
+import { usePeerState } from "@/app/store/peer";
 import { Button } from "@/components/ui/button";
-import { useConnectionStateManager } from "@/hooks/useConnectionStateManager";
 const data = {
   versions: ["Offline", "Automated"],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { showModal } = useVisibilityState();
-  const { values: host } = useConnectionStateManager<HostStateType>(hostState);
-  const { values: peer } = useConnectionStateManager<PeerStateType>(peerState);
+  const { currentHostState } = useHostState();
+  const { currentPeerState } = usePeerState();
 
   return (
     <Sidebar {...props}>
@@ -41,25 +38,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         />
       </SidebarHeader>
       <SidebarContent>
-        {host.dataChannelReady ||
-          (peer.dataChannelReady && (
-            <SidebarGroup>
-              <SidebarGroupLabel>Connected Peer</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton>
-                      {host.peerConnection
-                        ? peer.username
-                        : peer.peerAnswer
-                        ? host.username
-                        : ""}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+        {(currentHostState.dataChannelReady ||
+          currentPeerState.dataChannelReady) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Connected Peer</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton>
+                    {currentHostState.peerConnection
+                      ? currentHostState.connectedUsers[0]
+                      : currentPeerState.peerConnection
+                      ? currentPeerState.connectedUsers[0]
+                      : ""}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
@@ -79,14 +76,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           >
             Join connection
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex cursor-pointer"
-            onClick={() => showModal(ModalIds.qrCodeResultModal)}
-          >
-            Show QR Code
-          </Button>
+          {(currentHostState.offer || currentPeerState.peerAnswer) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex cursor-pointer"
+              onClick={() => showModal(ModalIds.qrCodeResultModal)}
+            >
+              Show QR Code
+            </Button>
+          )}
         </div>
       </SidebarFooter>
     </Sidebar>

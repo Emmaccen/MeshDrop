@@ -13,5 +13,5 @@ export interface OfferMetadata {
   type: RTCSdpType | undefined;
   sdp: string | undefined;
   userId: string;
-  userName: string | null;
+  username: string | null;
 }

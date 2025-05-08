@@ -4,7 +4,7 @@ import { toast } from "sonner";
 export const useCreateHostConnection = () => {
   const { updateHostStatePartially, currentHostState } = useHostState();
 
-  const createHost = async () => {
+  const createHost = async (config?: { username: string; userId: string }) => {
     const newPeerConnection = new RTCPeerConnection({
       iceServers: [], // empty for fully offline connections
     });
@@ -30,14 +30,14 @@ export const useCreateHostConnection = () => {
       const offerWithMetadata: OfferMetadata = {
         type: offer.type,
         sdp: offer.sdp,
-        userId,
-        userName: currentHostState.username,
+        userId: config?.userId ?? userId,
+        username: config?.username ?? currentHostState.username,
       };
       updateHostStatePartially({
         offer: JSON.stringify(offerWithMetadata),
         peerConnection: newPeerConnection,
         dataChannel: newDataChannel,
-        userId,
+        userId: config?.userId ?? userId,
       });
       toast.success("Host connection created successfully");
     } catch (error) {

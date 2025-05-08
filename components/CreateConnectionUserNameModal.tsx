@@ -48,11 +48,15 @@ export const CreateConnectionUserNameModal = () => {
           <Button
             onClick={() => {
               if (!username.trim()) return;
+              const userId = crypto.randomUUID();
               updateHostStatePartially({
                 username: username,
-                userId: crypto.randomUUID(),
+                userId,
               });
-              createHost();
+              createHost({
+                username: username,
+                userId,
+              });
               resetPeerState();
               hidePreviousThenShowNext(
                 ModalIds.createConnectionUserNameModal,

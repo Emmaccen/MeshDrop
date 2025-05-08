@@ -35,6 +35,7 @@ export const useHandshakeQrScanner = () => {
         }
 
         return {
+          ...parsedData,
           type: parsedData.type,
           sdp: parsedData.sdp,
         };

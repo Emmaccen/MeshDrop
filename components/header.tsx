@@ -8,32 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { QrCodeIcon } from "lucide-react";
-// interface FileTransferConnectionStatusProps {
-//   connected: boolean;
-// }
-
-// const FileTransferConnectionStatus = ({
-//   connected,
-// }: FileTransferConnectionStatusProps) => {
-//   if (connected)
-//     return (
-//       <Alert className="rounded-none border-y border-t-0 bg-primary/10 text-primary">
-//         <Smile className="h-4 w-4" />
-//         <AlertDescription>
-//           Connected and ready to transfer files
-//         </AlertDescription>
-//       </Alert>
-//     );
-
-//   return (
-//     <Alert className="rounded-none border-y border-t-0 bg-sidebar">
-//       <Frown className="h-4 w-4" />
-//       <AlertDescription className="flex text-xs sm:text-sm">
-//         Not connected. Click Connect to start transferring files.
-//       </AlertDescription>
-//     </Alert>
-//   );
-// };
 
 export const PageHeader = () => {
   // const connected = false;
@@ -52,7 +26,7 @@ export const PageHeader = () => {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {currentHostState.offer && currentPeerState.peerAnswer && (
+          {(currentHostState.offer || currentPeerState.peerAnswer) && (
             <QrCodeIcon
               role="button"
               aria-label="View Connection QR Code"
@@ -77,7 +51,6 @@ export const PageHeader = () => {
           </Button>
         </div>
       </header>
-      {/* <FileTransferConnectionStatus connected={connected} /> */}
     </>
   );
 };

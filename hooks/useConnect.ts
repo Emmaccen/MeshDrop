@@ -53,16 +53,16 @@ export const useConnect = () => {
             type: answer?.type,
             sdp: answer?.sdp,
             userId: userId,
-            userName: currentPeerState.username,
+            username: currentPeerState.username,
           };
           updatePeerStatePartially({
             peerAnswer: JSON.stringify(offerWithMetadata),
             peerConnection: newPeerConnection,
-            connectedUsers: [offerData.userName ?? "Host"],
+            connectedUsers: [offerData.username ?? "Host"],
           });
         }
       };
-      toast.success("Host connection processed successfully");
+      // toast.success("Host connection processed successfully");
     } catch (error) {
       console.error(error);
       toast.error("Error connecting to host, please try again");
@@ -89,9 +89,9 @@ export const useConnect = () => {
         })
       );
       updateHostStatePartially({
-        connectedUsers: [answer.userName ?? "Peer"],
+        connectedUsers: [answer.username ?? "Peer"],
       });
-      toast.success(`Connection established`);
+      // toast.success(`Connection established`);
     } catch (error) {
       console.error("Error processing answer:", error);
       toast.error("Error processing connection request");
