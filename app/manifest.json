@@ -4,6 +4,9 @@
   "description": "A browser-based file transfer solution that enables seamless, direct device-to-device file sharing without the need for installation or cloud services",
   "start_url": "/",
   "id": "MeshDrop",
+  "dir": "ltr",
+  "lang": "en",
+  "categories": ["utilities", "productivity", "communication", "file-transfer"],
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
