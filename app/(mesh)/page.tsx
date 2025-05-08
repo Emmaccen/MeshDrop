@@ -201,7 +201,7 @@ export default function Page() {
             value={message}
             onKeyUp={(e) => {
               if (e.key !== "Enter") return;
-              send();
+              sendFile();
             }}
             name="message"
             placeholder="Caption your file?"
