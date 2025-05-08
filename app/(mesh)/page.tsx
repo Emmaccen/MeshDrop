@@ -158,7 +158,7 @@ export default function Page() {
   return (
     <>
       <ScrollArea
-        viewPortRef={scrollAreaRef}
+        viewportref={scrollAreaRef}
         className="flex-1 overflow-y-auto py-6 px-5 w-full max-w-[800px] mx-auto"
       >
         {currentMessengerState.messages.length > 0 && (
