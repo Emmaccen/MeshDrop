@@ -5,15 +5,23 @@ import FileChunksManager from "@/lib/FileChunkManager";
 import { toast } from "sonner";
 import { useVisibilityNotification } from "./useVisibilityNotification";
 
+let notificationRequested = false;
 export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
-  const { notifyIfPageHiddenOrInBackground } = useVisibilityNotification();
+  const {
+    notifyIfPageHiddenOrInBackground,
+    requestPermissionToShowNotification,
+  } = useVisibilityNotification();
 
   const { updateFileManagerStatePartially, currentFileManagerState } =
     useFileManagerState();
   const handleDataChannelMessage = (event: MessageEvent) => {
     const data: Message = JSON.parse(event.data);
+    if (!notificationRequested) {
+      requestPermissionToShowNotification();
+      notificationRequested = true;
+    }
     try {
       if (data.messageType === "message") {
         if (!data.totalChunks) {
