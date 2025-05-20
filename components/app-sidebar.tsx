@@ -1,6 +1,16 @@
 import * as React from "react";
 
+import { useHostState } from "@/app/store/host";
+import { DiscoveryMode } from "@/app/store/misc/types";
+import { useVisibilityState } from "@/app/store/modals";
+import { ModalIds } from "@/app/store/modals/types";
+import { usePeerState } from "@/app/store/peer";
+import {
+  CreateConnectionButton,
+  JoinConnectionButton,
+} from "@/components/ConnectionActionButtons";
 import { DropDownSwitcher } from "@/components/dropdown-switcher";
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -14,16 +24,15 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
-
-import { useHostState } from "@/app/store/host";
-import { useVisibilityState } from "@/app/store/modals";
-import { ModalIds } from "@/app/store/modals/types";
-import { usePeerState } from "@/app/store/peer";
-import { Button } from "@/components/ui/button";
-const data = {
+const data: {
+  connectionMode: {
+    mode: DiscoveryMode;
+    enable: boolean;
+  }[];
+} = {
   connectionMode: [
-    { mode: "Offline", enable: true },
-    { mode: "Automated", enable: false },
+    { mode: "offline", enable: true },
+    { mode: "online", enable: true },
   ],
 };
 
@@ -35,10 +44,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-        <DropDownSwitcher
-          mode={data.connectionMode}
-          defaultMode={data.connectionMode[0]}
-        />
+        <DropDownSwitcher mode={data.connectionMode} />
       </SidebarHeader>
       <SidebarContent>
         {(currentHostState.dataChannelReady ||
@@ -64,21 +70,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarRail />
       <SidebarFooter>
         <div className="flex md:hidden flex-col gap-2 px-2">
-          <Button
-            size="sm"
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => showModal(ModalIds.createConnectionUserNameModal)}
-          >
-            Create Connection
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex cursor-pointer"
-            onClick={() => showModal(ModalIds.joinConnectionUserNameModal)}
-          >
-            Join connection
-          </Button>
+          <CreateConnectionButton className="flex items-center gap-2 cursor-pointer" />
+          <JoinConnectionButton className="flex items-center gap-2 cursor-pointer" />
           {(currentHostState.offer || currentPeerState.peerAnswer) && (
             <Button
               variant="outline"

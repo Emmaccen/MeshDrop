@@ -28,6 +28,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  CreateConnectionButton,
+  JoinConnectionButton,
+} from "@/components/ConnectionActionButtons";
 
 export default function Page() {
   const [message, setMessage] = useState("");
@@ -135,21 +139,8 @@ export default function Page() {
           </p>
         </div>
         <div className="md:hidden flex flex-col gap-2 px-2">
-          <Button
-            size="sm"
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => showModal(ModalIds.createConnectionUserNameModal)}
-          >
-            Create Connection
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex cursor-pointer"
-            onClick={() => showModal(ModalIds.joinConnectionUserNameModal)}
-          >
-            Join connection
-          </Button>
+          <CreateConnectionButton className="flex items-center gap-2 cursor-pointer" />
+          <JoinConnectionButton className="flex items-center gap-2 cursor-pointer" />
         </div>
       </div>
     );

@@ -4,7 +4,10 @@ import { useHostState } from "@/app/store/host";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
-import { Button } from "@/components/ui/button";
+import {
+  CreateConnectionButton,
+  JoinConnectionButton,
+} from "@/components/ConnectionActionButtons";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { QrCodeIcon } from "lucide-react";
@@ -34,21 +37,8 @@ export const PageHeader = () => {
               onClick={() => showModal(ModalIds.qrCodeResultModal)}
             />
           )}
-          <Button
-            size="sm"
-            className="hidden md:flex items-center gap-2 cursor-pointer"
-            onClick={() => showModal(ModalIds.createConnectionUserNameModal)}
-          >
-            Create Connection
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden md:flex cursor-pointer"
-            onClick={() => showModal(ModalIds.joinConnectionUserNameModal)}
-          >
-            Join connection
-          </Button>
+          <CreateConnectionButton />
+          <JoinConnectionButton />
         </div>
       </header>
     </>
