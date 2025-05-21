@@ -4,4 +4,5 @@ export enum ModalIds {
   "joinConnectionUserNameModal" = "joinConnectionUserNameModal",
   "qrScannerModal" = "qrScannerModal",
   "fileMessageCaptionModal" = "fileMessageCaptionModal",
+  "joinOrShareWithRoomIdAutoDiscoveryModal" = "joinOrShareWithRoomIdAutoDiscoveryModal",
 }
