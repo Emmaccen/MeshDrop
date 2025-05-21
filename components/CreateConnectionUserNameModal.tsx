@@ -15,15 +15,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { useCreateHostConnection } from "@/hooks/useCreateHostConnection";
 import { useState } from "react";
+import { useMiscState } from "@/app/store/misc";
 
 export const CreateConnectionUserNameModal = () => {
-  const { updateHostStatePartially, currentHostState } = useHostState();
+  const { currentHostState } = useHostState();
   const { resetPeerState } = usePeerState();
   const [username, setUserName] = useState(currentHostState.username ?? "");
   const { createHost } = useCreateHostConnection();
   const { imVisible, hidePreviousThenShowNext, hideModal } =
     useVisibilityState();
-
+  const { currentMiscState } = useMiscState();
+  const [imLoading, setImLoading] = useState({
+    id: "",
+  });
   return (
     <Dialog
       open={imVisible(ModalIds.createConnectionUserNameModal)}
@@ -46,22 +50,23 @@ export const CreateConnectionUserNameModal = () => {
         />
         <DialogFooter>
           <Button
-            onClick={() => {
+            loading={imLoading.id === "creating-connection"}
+            onClick={async () => {
               if (!username.trim()) return;
+              setImLoading({ id: "creating-connection" });
               const userId = crypto.randomUUID();
-              updateHostStatePartially({
-                username: username,
-                userId,
-              });
-              createHost({
+              await createHost({
                 username: username,
                 userId,
               });
               resetPeerState();
               hidePreviousThenShowNext(
                 ModalIds.createConnectionUserNameModal,
-                ModalIds.qrCodeResultModal
+                currentMiscState.discoveryMode === "offline"
+                  ? ModalIds.qrCodeResultModal
+                  : ModalIds.joinOrShareWithRoomIdAutoDiscoveryModal
               );
+              setImLoading({ id: "" });
             }}
             className="cursor-pointer"
           >

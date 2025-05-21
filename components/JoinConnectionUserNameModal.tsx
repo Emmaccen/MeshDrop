@@ -1,5 +1,6 @@
 "use client";
 import { useHostState } from "@/app/store/host";
+import { useMiscState } from "@/app/store/misc";
 import { useVisibilityState } from "@/app/store/modals";
 import { ModalIds } from "@/app/store/modals/types";
 import { usePeerState } from "@/app/store/peer";
@@ -21,6 +22,7 @@ export const JoinConnectionUserNameModal = () => {
   const [username, setUserName] = useState(currentPeerState.username ?? "");
   const { imVisible, hidePreviousThenShowNext, hideModal } =
     useVisibilityState();
+  const { currentMiscState } = useMiscState();
 
   return (
     <Dialog
@@ -51,7 +53,9 @@ export const JoinConnectionUserNameModal = () => {
               });
               hidePreviousThenShowNext(
                 ModalIds.joinConnectionUserNameModal,
-                ModalIds.qrScannerModal
+                currentMiscState.discoveryMode === "offline"
+                  ? ModalIds.qrScannerModal
+                  : ModalIds.joinOrShareWithRoomIdAutoDiscoveryModal
               );
               resetHostState();
             }}

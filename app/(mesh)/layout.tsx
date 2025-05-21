@@ -6,6 +6,7 @@ import { CreateConnectionUserNameModal } from "@/components/CreateConnectionUser
 import { PageHeader } from "@/components/header";
 import { JoinConnectionUserNameModal } from "@/components/JoinConnectionUserNameModal";
 import { QrCodeResultModal } from "@/components/QrCodeResultModal";
+import { JoinWithOrShareRoomIdAutoDiscoveryModal } from "@/components/JoinWithOrShareRoomIdAutoDiscoveryModal";
 import { QrScannerModal } from "@/components/QrScannerModal";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
@@ -22,6 +23,7 @@ export default function StoreFrontLayout({
       <CreateConnectionUserNameModal />
       <JoinConnectionUserNameModal />
       <QrCodeResultModal />
+      <JoinWithOrShareRoomIdAutoDiscoveryModal />
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset>

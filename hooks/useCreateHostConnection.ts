@@ -1,10 +1,17 @@
 import { useHostState } from "@/app/store/host";
 import { OfferMetadata } from "@/app/store/host/types";
+import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
+import generateReadableRoomId from "@/lib/generateReadableRoomId";
 import { toast } from "sonner";
+import { useConnect } from "./useConnect";
+import { useMiscState } from "@/app/store/misc";
 export const useCreateHostConnection = () => {
-  const { updateHostStatePartially, currentHostState } = useHostState();
+  const { updateHostStatePartially } = useHostState();
+  const firestore = FirestoreSignaling.getInstance();
+  const { acceptIncomingConnectionRequestFromPeer } = useConnect();
+  const { currentMiscState } = useMiscState();
 
-  const createHost = async (config?: { username: string; userId: string }) => {
+  const createHost = async (config: { username: string; userId: string }) => {
     const newPeerConnection = new RTCPeerConnection({
       iceServers: [], // empty for fully offline connections
     });
@@ -26,20 +33,42 @@ export const useCreateHostConnection = () => {
     try {
       const offer = await newPeerConnection.createOffer();
       await newPeerConnection.setLocalDescription(offer);
-      const userId = crypto.randomUUID();
+      const roomId =
+        currentMiscState.discoveryMode === "online"
+          ? generateReadableRoomId()
+          : null;
       const offerWithMetadata: OfferMetadata = {
         type: offer.type,
         sdp: offer.sdp,
-        userId: config?.userId ?? userId,
-        username: config?.username ?? currentHostState.username,
+        userId: config.userId,
+        username: config.username,
+        roomId,
       };
       updateHostStatePartially({
         offer: JSON.stringify(offerWithMetadata),
         peerConnection: newPeerConnection,
         dataChannel: newDataChannel,
-        userId: config?.userId ?? userId,
+        userId: config.userId,
+        username: config.username,
+        roomId,
       });
-      toast.success("Host connection created successfully");
+      if (roomId) {
+        const connection = await firestore.createRoomAsHost(
+          roomId,
+          offerWithMetadata
+        );
+        if (connection) {
+          firestore.listenForPeerAnswers(
+            roomId,
+            newPeerConnection,
+            acceptIncomingConnectionRequestFromPeer
+          );
+          toast.success("Host connection created successfully");
+        } else {
+          toast.error("Unable to create connection");
+        }
+      }
+      return offerWithMetadata;
     } catch (error) {
       console.error(error);
       toast.error("Error creating or setting local description");
