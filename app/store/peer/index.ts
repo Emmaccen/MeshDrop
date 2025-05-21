@@ -13,6 +13,7 @@ export const peerState = atomWithReset<PeerStateType>({
   username: null,
   userId: null,
   connectedUsers: [],
+  roomId: null,
 });
 
 export const usePeerState = () => {

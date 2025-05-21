@@ -11,6 +11,7 @@ export const hostState = atomWithReset<HostStateType>({
   username: null,
   userId: null,
   connectedUsers: [],
+  roomId: null,
 });
 
 export const useHostState = () => {
