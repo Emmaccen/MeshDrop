@@ -11,11 +11,18 @@ import { QrScannerModal } from "@/components/QrScannerModal";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
+import { useEffect } from "react";
+import { FileStreamingManager } from "@/lib/Database";
 export default function StoreFrontLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    const database = new FileStreamingManager();
+    database.clearChunkStore();
+  }, []);
+
   return (
     <Provider>
       <Toaster />
