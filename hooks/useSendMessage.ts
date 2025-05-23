@@ -9,11 +9,6 @@ import { Message } from "@/app/store/messenger/types";
 import { SafeDataChannelSender } from "@/lib/SafeDataChannelSender";
 import { toast } from "sonner";
 
-// export function* chunkUint8Array(data: Uint8Array, chunkSize: number) {
-//   for (let i = 0; i < data.length; i += chunkSize) {
-//     yield data.slice(i, i + chunkSize);
-//   }
-// }
 export const useSendDataInChunks = () => {
   const { updateFileManagerStatePartially } = useFileManagerState();
   const chunkSender = async (
@@ -53,7 +48,7 @@ export const useSendDataInChunks = () => {
         );
 
         // Send each chunk with metadata
-        // Potential 🐛 here if you edit without thinking, if user sends 10k emojis and we've calc/assumed size for CHUNK_SIZE_SAFE_LIMIT above
+        // Potential 🐛 here. Edit with caution, if user sends 10k emojis and we've calc/assumed size for CHUNK_SIZE_SAFE_LIMIT above
         // additional Array.from(chunk) and metadata increases this limit, so we're going with CHUNK_SIZE_MESSAGE_SAFE_LIMIT
 
         for (let i = 0; i < totalChunks; i++) {
@@ -104,9 +99,14 @@ export const useSendDataInChunks = () => {
           const chunkMessage: Message = {
             ...message,
             chunkData: Array.from(new Uint8Array(buffer)),
-            chunkIndex: i,
+            chunkIndex: i + 1,
             totalChunks: totalFileChunks,
           };
+          // Wait if overflow flag is active
+          while (safeSender.isFlushingOverflow) {
+            await new Promise((resolve) => setTimeout(resolve, 25));
+          }
+
           safeSender.enqueue(chunkMessage);
         }
         break;

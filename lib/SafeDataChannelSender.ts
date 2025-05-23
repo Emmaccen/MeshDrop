@@ -1,11 +1,12 @@
-import { BUFFER_THRESHOLD } from "@/app/store/constants";
+import { BUFFER_THRESHOLD, MAX_QUEUE_LENGTH } from "@/app/store/constants";
 import { toast } from "sonner";
-
 export class SafeDataChannelSender {
   private queue: string[] = [];
   private sending = false;
   private channel: RTCDataChannel;
   private onMessageSent?: (raw: string) => void;
+  public isFlushingOverflow = false; // adding this to prevent memory choking errors
+  private MAX_QUEUE = MAX_QUEUE_LENGTH;
 
   constructor(
     dataChannel: RTCDataChannel,
@@ -23,6 +24,11 @@ export class SafeDataChannelSender {
   enqueue(message: object) {
     const msgStr = JSON.stringify(message);
     this.queue.push(msgStr);
+
+    if (this.queue.length > this.MAX_QUEUE) {
+      this.isFlushingOverflow = true;
+    }
+
     this.tryFlush();
   }
 
@@ -44,9 +50,9 @@ export class SafeDataChannelSender {
 
       const nextMessage = this.queue.shift();
       try {
-        this.channel.send(nextMessage!);
-        // ✅ Notify progress
-        if (this.onMessageSent) this.onMessageSent(nextMessage!);
+        if (!nextMessage) return;
+        this.channel.send(nextMessage);
+        this.onMessageSent?.(nextMessage);
       } catch (err) {
         console.error("Failed to send over WebRTC:", err);
         toast.error("An error occurred in the buffer queue");
@@ -54,5 +60,6 @@ export class SafeDataChannelSender {
     }
 
     this.sending = false;
+    this.isFlushingOverflow = false;
   }
 }
