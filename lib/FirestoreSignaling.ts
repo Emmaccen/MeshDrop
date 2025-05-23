@@ -1,14 +1,14 @@
 import { OfferMetadata } from "@/app/store/host/types";
 import { getApp, getApps, initializeApp } from "firebase/app";
 import {
-  Firestore,
-  getFirestore,
   doc,
-  setDoc,
-  updateDoc,
+  Firestore,
+  getDoc,
+  getFirestore,
   onSnapshot,
   serverTimestamp,
-  getDoc,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -69,11 +69,13 @@ export class FirestoreSignaling {
   ) => {
     const roomRef = doc(this.database, "rooms", roomId);
 
-    return onSnapshot(roomRef, (docSnap) => {
+    const unsubscribe = onSnapshot(roomRef, (docSnap) => {
       const data = docSnap.data();
       if (data?.answer) {
         onAnswer(JSON.stringify(data.answer), peerConnection);
+        unsubscribe();
       }
     });
+    return unsubscribe;
   };
 }
