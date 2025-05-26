@@ -4,7 +4,7 @@ import { MiscType } from "@/app/store/misc/types";
 import { useUpdateStore } from "@/app/store/utils/useUpdateStore";
 
 export const miscState = atom<MiscType>({
-  discoveryMode: "offline",
+  discoveryMode: "online",
 });
 
 export const useMiscState = () => {
