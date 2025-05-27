@@ -1,3 +1,4 @@
+import { WakeLockManager } from "@/lib/WakeLockManager";
 // import { MAX_QUEUE_LENGTH } from "@/app/store/constants";
 import { useFileManagerState } from "@/app/store/fileManager";
 import { useMessengerState } from "@/app/store/messenger";
@@ -14,6 +15,7 @@ export const useHandleDataChannelMessages = () => {
   const fileChunksManager = FileChunksManager.getInstance();
   const fileStreamManager = new FileStreamingManager();
   fileStreamManager.init();
+  const keepMyScreenOn = WakeLockManager.getInstance();
   const {
     notifyIfPageHiddenOrInBackground,
     requestPermissionToShowNotification,
@@ -21,12 +23,14 @@ export const useHandleDataChannelMessages = () => {
 
   const { updateFileManagerStatePartially, currentFileManagerState } =
     useFileManagerState();
+
   const handleDataChannelMessage = async (event: MessageEvent) => {
     const data: Message = JSON.parse(event.data);
     if (!notificationRequested) {
       requestPermissionToShowNotification();
       notificationRequested = true;
     }
+
     try {
       if (data.messageType === "message") {
         if (!data.totalChunks) {
@@ -72,6 +76,12 @@ export const useHandleDataChannelMessages = () => {
           },
         });
         addNewMessage(data);
+        if (
+          keepMyScreenOn.isWakeLockSupported &&
+          !keepMyScreenOn.isWakeLockActive
+        ) {
+          keepMyScreenOn.requestWakeLock();
+        }
       } else if (data.messageType === "file") {
         const fileMetadata = fileStreamManager.getFileMetadata(data.id);
 
@@ -106,6 +116,13 @@ export const useHandleDataChannelMessages = () => {
             body: data.fileName,
           });
           fileChunksManager.removeFile(data.id);
+          if (
+            keepMyScreenOn.isWakeLockSupported &&
+            keepMyScreenOn.isWakeLockActive &&
+            fileChunksManager.getAllFiles().size === 0
+          ) {
+            keepMyScreenOn.stop();
+          }
         }
       }
     } catch (error) {
@@ -120,6 +137,12 @@ export const useHandleDataChannelMessages = () => {
       });
       // throw error;
       // fileChunksManager.removeFile(data.id);
+      if (
+        keepMyScreenOn.isWakeLockSupported &&
+        keepMyScreenOn.isWakeLockActive
+      ) {
+        keepMyScreenOn.stop();
+      }
     }
   };
 
