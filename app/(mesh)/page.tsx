@@ -32,6 +32,7 @@ import {
   CreateConnectionButton,
   JoinConnectionButton,
 } from "@/components/ConnectionActionButtons";
+import { trackPWAUsage } from "@/hooks/usePWAInstallTracking";
 
 export default function Page() {
   const [message, setMessage] = useState("");
@@ -46,6 +47,9 @@ export default function Page() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { startTransfer } = useTransferFile();
 
+  useEffect(() => {
+    trackPWAUsage();
+  }, []);
   useEffect(() => {
     if (scrollAreaRef.current && !message.length) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;

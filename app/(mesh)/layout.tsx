@@ -13,11 +13,13 @@ import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
 import { useEffect } from "react";
 import { FileStreamingManager } from "@/lib/Database";
+import { usePWAInstallTracking } from "@/hooks/usePWAInstallTracking";
 export default function StoreFrontLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  usePWAInstallTracking();
   useEffect(() => {
     const database = new FileStreamingManager();
     database.clearChunkStore();
