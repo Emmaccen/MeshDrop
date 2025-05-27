@@ -24,6 +24,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { PWAInstallButton } from "@/components/ui/PWAInstallButton";
 const data: {
   connectionMode: {
     mode: DiscoveryMode;
@@ -69,6 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter>
+        <PWAInstallButton />
         <div className="flex md:hidden flex-col gap-2 px-2">
           <CreateConnectionButton className="flex items-center gap-2 cursor-pointer" />
           <JoinConnectionButton className="flex items-center gap-2 cursor-pointer" />
