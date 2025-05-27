@@ -6,17 +6,29 @@ import {
 import { useFileManagerState } from "@/app/store/fileManager";
 import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
+import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
 import { SafeDataChannelSender } from "@/lib/SafeDataChannelSender";
 import { toast } from "sonner";
-
+import { logEvent } from "firebase/analytics";
+import { WakeLockManager } from "@/lib/WakeLockManager";
 export const useSendDataInChunks = () => {
   const { updateFileManagerStatePartially } = useFileManagerState();
+  const keepMyScreenOn = WakeLockManager.getInstance();
+
+  const signaling = FirestoreSignaling.getInstance();
+  const analytics = signaling.getAnalytics();
   const chunkSender = async (
     dataChannel: RTCDataChannel | null,
     message: Message
   ) => {
     // use dataChannelReady for this check
     if (!dataChannel) return;
+
+    if (analytics) {
+      logEvent(analytics, "files_sent", {
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     switch (message.messageType) {
       case "message":
@@ -71,6 +83,13 @@ export const useSendDataInChunks = () => {
         // Handle file transfer here
         if (!message.file) return;
 
+        if (
+          keepMyScreenOn.isWakeLockSupported &&
+          !keepMyScreenOn.isWakeLockActive
+        ) {
+          keepMyScreenOn.requestWakeLock();
+        }
+
         const file = message.file;
         const totalFileChunks = Math.ceil(file.size / CHUNK_SIZE_SAFE_LIMIT);
         let fileChunksSent = 0;
@@ -87,6 +106,14 @@ export const useSendDataInChunks = () => {
                   isTransferring: true,
                 },
               });
+            }
+            if (parsed.chunkIndex === parsed.totalChunks) {
+              if (
+                keepMyScreenOn.isWakeLockSupported &&
+                keepMyScreenOn.isWakeLockActive
+              ) {
+                keepMyScreenOn.stop();
+              }
             }
           }
         );
@@ -109,6 +136,7 @@ export const useSendDataInChunks = () => {
 
           safeSender.enqueue(chunkMessage);
         }
+
         break;
 
       default:
