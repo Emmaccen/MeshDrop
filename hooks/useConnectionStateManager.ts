@@ -1,11 +1,10 @@
 import { HostStateType } from "@/app/store/host/types";
 import { PeerStateType } from "@/app/store/peer/types";
 import { useUpdateStore } from "@/app/store/utils/useUpdateStore";
+import { useHandleDataChannelMessages } from "@/hooks/useHandleDataChannelMessages";
 import { Atom } from "jotai";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { useHandleDataChannelMessages } from "@/hooks/useHandleDataChannelMessages";
-import { useWakeLock } from "@/hooks/useWakeLock";
 
 interface HostAndPeerCommonProperties
   extends Pick<
@@ -34,21 +33,12 @@ export const useConnectionStateManager = <
     useUpdateStore<T>(atomStore);
 
   const { handleDataChannelMessage } = useHandleDataChannelMessages();
-  const {
-    wakeLockActive,
-    wakeLockSupported,
-    requestWakeLock,
-    releaseWakeLock,
-  } = useWakeLock();
 
   const handlePeerConnectionStateChange = (ev: Event) => {
     const { connectionState } = ev.currentTarget as RTCPeerConnection;
     console.info("Connection state changed:", connectionState);
     toast.info(`Connection state: ${connectionState}`);
     if (connectionState !== "connected") {
-      if (wakeLockActive) {
-        releaseWakeLock();
-      }
     }
     updateHostAndPeerCommonPropertiesPartially({
       connectionState: connectionState,
@@ -58,9 +48,6 @@ export const useConnectionStateManager = <
   const handleDataChannelOpen = () => {
     console.info("Data channel is open!");
     toast.success("Data channel is open");
-    if (wakeLockSupported) {
-      requestWakeLock();
-    }
     updateHostAndPeerCommonPropertiesPartially({
       dataChannelReady: true,
     } as Partial<T>);
