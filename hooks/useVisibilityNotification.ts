@@ -14,6 +14,8 @@ export function useVisibilityNotification() {
       shouldNotify.current = document.visibilityState === "hidden";
     };
 
+    handleVisibility();
+
     document.addEventListener("visibilitychange", handleVisibility);
 
     return () => {
