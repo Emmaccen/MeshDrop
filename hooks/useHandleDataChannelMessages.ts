@@ -2,10 +2,10 @@
 import { useFileManagerState } from "@/app/store/fileManager";
 import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
+import { useVisibilityNotification } from "@/hooks/useVisibilityNotification";
 import { FileStreamingManager } from "@/lib/Database";
 import FileChunksManager from "@/lib/FileChunkManager";
 import { toast } from "sonner";
-import { useVisibilityNotification } from "@/hooks/useVisibilityNotification";
 
 let notificationRequested = false;
 
@@ -13,7 +13,7 @@ export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
   const fileStreamManager = new FileStreamingManager();
-
+  fileStreamManager.init();
   const {
     notifyIfPageHiddenOrInBackground,
     requestPermissionToShowNotification,
@@ -105,6 +105,7 @@ export const useHandleDataChannelMessages = () => {
             title: "New file received",
             body: data.fileName,
           });
+          fileChunksManager.removeFile(data.id);
         }
       }
     } catch (error) {

@@ -7,8 +7,10 @@ const METADATA_STORE = "mesh-metadata";
 export class FileStreamingManager {
   private db: IDBDatabase | null = null;
 
-  constructor() {
-    this.initDB();
+  async init(): Promise<void> {
+    if (typeof window === "undefined") return;
+
+    await this.initDB();
   }
 
   private async initDB(): Promise<void> {

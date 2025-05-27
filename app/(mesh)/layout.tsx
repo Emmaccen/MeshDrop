@@ -22,6 +22,7 @@ export default function StoreFrontLayout({
   usePWAInstallTracking();
   useEffect(() => {
     const database = new FileStreamingManager();
+    database.init();
     database.clearChunkStore();
   }, []);
 
