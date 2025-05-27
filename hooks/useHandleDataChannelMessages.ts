@@ -5,7 +5,7 @@ import { Message } from "@/app/store/messenger/types";
 import { FileStreamingManager } from "@/lib/Database";
 import FileChunksManager from "@/lib/FileChunkManager";
 import { toast } from "sonner";
-import { useVisibilityNotification } from "./useVisibilityNotification";
+import { useVisibilityNotification } from "@/hooks/useVisibilityNotification";
 
 let notificationRequested = false;
 

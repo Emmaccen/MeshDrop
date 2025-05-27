@@ -3,7 +3,7 @@ import { OfferMetadata } from "@/app/store/host/types";
 import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
 import generateReadableRoomId from "@/lib/generateReadableRoomId";
 import { toast } from "sonner";
-import { useConnect } from "./useConnect";
+import { useConnect } from "@/hooks/useConnect";
 import { useMiscState } from "@/app/store/misc";
 export const useCreateHostConnection = () => {
   const { updateHostStatePartially } = useHostState();
