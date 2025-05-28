@@ -1,6 +1,6 @@
 {
   "name": "meshdrop",
-  "version": "0.1.1",
+  "version": "0.1.0-beta.2",
   "private": true,
   "description": "Offline-first file sharing powered by WebRTC and P2P. Works over local Wi-Fi, even without internet.",
   "repository": {
