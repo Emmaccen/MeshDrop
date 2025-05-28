@@ -1,6 +1,6 @@
 {
   "name": "meshdrop",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.2",
   "private": true,
   "description": "Offline-first file sharing powered by WebRTC and P2P. Works over local Wi-Fi, even without internet.",
   "repository": {
@@ -39,6 +39,7 @@
     "@serwist/next": "^9.0.14",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^11.7.1",
     "html5-qrcode": "^2.3.8",
     "jotai": "^2.12.2",
     "lucide-react": "^0.485.0",

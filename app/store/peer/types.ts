@@ -7,4 +7,5 @@ export interface PeerStateType {
   username: string | null;
   userId: string | null;
   connectedUsers: string[];
+  roomId: string | null;
 }

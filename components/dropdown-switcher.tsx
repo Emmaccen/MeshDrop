@@ -14,17 +14,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { DiscoveryMode } from "@/app/store/misc/types";
+import { useMiscState } from "@/app/store/misc";
 
-type Mode = { mode: string; enable: boolean };
-export function DropDownSwitcher({
-  mode,
-  defaultMode,
-}: {
-  mode: Mode[];
-  defaultMode: Mode;
-}) {
-  const [selectedVersion, setSelectedVersion] =
-    React.useState<Mode>(defaultMode);
+type Mode = {
+  mode: DiscoveryMode;
+  enable: boolean;
+};
+export function DropDownSwitcher({ mode }: { mode: Mode[] }) {
+  const { currentMiscState, updateMiscStatePartially } = useMiscState();
 
   return (
     <SidebarMenu>
@@ -35,9 +33,11 @@ export function DropDownSwitcher({
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <div className="flex flex-col gap-0.5 leading-none">
+              <div className="flex flex-col gap-1 leading-none">
                 <span className="font-medium">Discovery Mode</span>
-                <span className="">{selectedVersion.enable}</span>
+                <span className="capitalize text-xs">
+                  {currentMiscState.discoveryMode}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -50,10 +50,14 @@ export function DropDownSwitcher({
               <DropdownMenuItem
                 disabled={!mode.enable}
                 key={mode.mode}
-                onSelect={() => setSelectedVersion(mode)}
+                onSelect={() =>
+                  updateMiscStatePartially({
+                    discoveryMode: mode.mode,
+                  })
+                }
               >
                 {mode.mode}{" "}
-                {mode.mode === selectedVersion.mode && (
+                {mode.mode === currentMiscState.discoveryMode && (
                   <Check className="ml-auto" />
                 )}
               </DropdownMenuItem>

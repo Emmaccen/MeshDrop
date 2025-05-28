@@ -1,16 +1,17 @@
 import { Message } from "@/app/store/messenger/types";
 
+export type FileChunk = Map<
+  string,
+  {
+    chunks: {
+      [index: number]: number[];
+    };
+    message: Message;
+  }
+>;
 class FileChunksManager {
   private static instance: FileChunksManager;
-  private fileChunks: Map<
-    string,
-    {
-      chunks: {
-        [index: number]: number[];
-      };
-      message: Message;
-    }
-  >;
+  private fileChunks: FileChunk;
 
   private constructor() {
     this.fileChunks = new Map();

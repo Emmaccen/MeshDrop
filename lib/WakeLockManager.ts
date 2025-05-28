@@ -1,171 +1,163 @@
 import { toast } from "sonner";
 
-/**
- * WakeLockManager - A utility class to manage the Wake Lock API
- * Prevents the screen from turning off during WebRTC connections
- */
-
 export class WakeLockManager {
   private wakeLock: WakeLockSentinel | null = null;
-  private isWakeLockSupported: boolean = false;
-  private isWakeLockActive: boolean = false;
-  private visibilityChangeHandler: (() => void) | null = null;
-  private autoReacquireWakeLock: boolean = true;
+  private static instance: WakeLockManager | null = null;
+  private static isCreating = false; // Prevent race conditions
 
-  /**
-   * Initialize the WakeLockManager
-   * @param autoReacquire - Whether to automatically reacquire the wake lock when the page becomes visible again
-   */
-  constructor(autoReacquire: boolean = true) {
-    // Check if the Wake Lock API is supported
-    this.isWakeLockSupported = "wakeLock" in navigator;
-    this.autoReacquireWakeLock = autoReacquire;
+  isWakeLockActive = false;
+  isWakeLockSupported =
+    typeof navigator !== "undefined" && "wakeLock" in navigator;
+  private retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private isRequesting = false;
+  private hasShownWakeLockToast = false;
+  private destroyed = false;
 
-    if (!this.isWakeLockSupported) {
-      console.warn("Wake Lock API is not supported in this browser.");
-      toast.info("Connections may be interrupted when the screen turns off");
+  // Private cuz... We don't like funny biz
+  private constructor() {
+    if (WakeLockManager.instance) {
+      throw new Error(
+        "Use WakeLockManager.getInstance() instead of new WakeLockManager()"
+      );
+    }
+
+    if (this.isWakeLockSupported) {
+      document.addEventListener(
+        "visibilitychange",
+        this.handleVisibilityChange
+      );
     }
   }
 
-  /**
-   * Request a wake lock to prevent the screen from turning off
-   * @returns Promise<boolean> - Whether the wake lock was successfully acquired
-   */
-  public async requestWakeLock(): Promise<boolean> {
-    if (!this.isWakeLockSupported) {
-      toast.error(
-        "Application is unable to keep the screen on. Connections may be interrupted when the screen turns off"
-      );
-      return false;
+  public static getInstance(): WakeLockManager {
+    // Double-checked locking pattern for thread safety
+    if (!WakeLockManager.instance && !WakeLockManager.isCreating) {
+      WakeLockManager.isCreating = true;
+
+      if (!WakeLockManager.instance) {
+        WakeLockManager.instance = new WakeLockManager();
+      }
+
+      WakeLockManager.isCreating = false;
     }
 
+    return WakeLockManager.instance!;
+  }
+
+  public async requestWakeLock(): Promise<boolean> {
+    if (
+      !this.isWakeLockSupported ||
+      this.isRequesting ||
+      this.isWakeLockActive ||
+      this.destroyed
+    )
+      return false;
+
     try {
-      // Request a screen wake lock
-      this.wakeLock = await navigator.wakeLock.request("screen");
+      this.isRequesting = true;
+      const lock = await navigator.wakeLock.request("screen");
+
+      this.wakeLock = lock;
       this.isWakeLockActive = true;
 
-      // Add event listener for wake lock release
-      this.wakeLock.addEventListener("release", () => {
-        this.isWakeLockActive = false;
-        console.info("Wake lock has been released");
-        toast.info("Connections may be interrupted when the screen turns off");
-      });
+      this.wakeLock.removeEventListener("release", this.handleWakeLockRelease);
+      this.wakeLock.addEventListener("release", this.handleWakeLockRelease);
 
-      // Set up the visibility change listener to reacquire wake lock when page becomes visible
-      if (this.autoReacquireWakeLock && !this.visibilityChangeHandler) {
-        this.visibilityChangeHandler = this.handleVisibilityChange.bind(this);
-        document.addEventListener(
-          "visibilitychange",
-          this.visibilityChangeHandler
-        );
-      }
-
-      console.info("Wake lock acquired successfully");
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
       this.handleWakeLockError(error);
       return false;
+    } finally {
+      this.isRequesting = false;
     }
   }
 
-  /**
-   * Release the wake lock allowing the screen to turn off
-   * @returns Promise<boolean> - Whether the wake lock was successfully released
-   */
-  public async releaseWakeLock(): Promise<boolean> {
-    if (!this.wakeLock || !this.isWakeLockActive) {
-      return false;
-    }
-
-    try {
-      await this.wakeLock.release();
-      this.wakeLock = null;
-      this.isWakeLockActive = false;
-
-      console.info("Wake lock released manually");
-      return true;
-    } catch (error) {
-      console.error("Failed to release wake lock:", error);
-      return false;
-    }
-  }
-
-  /**
-   * Get the current state of the wake lock
-   * @returns boolean - Whether the wake lock is currently active
-   */
-  public isActive(): boolean {
-    return this.isWakeLockActive;
-  }
-
-  /**
-   * Check if the Wake Lock API is supported
-   * @returns boolean - Whether the Wake Lock API is supported
-   */
-  public isSupported(): boolean {
-    return this.isWakeLockSupported;
-  }
-
-  /**
-   * Clean up the WakeLockManager by removing event listeners and releasing the wake lock
-   */
-  public cleanup(): void {
-    if (this.visibilityChangeHandler) {
-      document.removeEventListener(
-        "visibilitychange",
-        this.visibilityChangeHandler
-      );
-      this.visibilityChangeHandler = null;
-    }
-
-    if (this.isWakeLockActive && this.wakeLock) {
-      this.wakeLock
-        .release()
-        .catch((error) =>
-          console.error("Error releasing wake lock during cleanup:", error)
-        );
-    }
-  }
-
-  /**
-   * Handle the visibility change event to reacquire the wake lock
-   */
-  private async handleVisibilityChange(): Promise<void> {
-    if (
-      document.visibilityState === "visible" &&
-      !this.isWakeLockActive &&
-      this.autoReacquireWakeLock
-    ) {
-      try {
-        await this.requestWakeLock();
-      } catch (error) {
-        this.handleWakeLockError(error);
-      }
-    }
-  }
-
-  /**
-   * Handle errors related to wake lock operations
-   * @param error - The error that occurred
-   */
-  private handleWakeLockError(error: unknown): void {
-    if (error instanceof Error) {
-      // Handle specific error types
-      if (error.name === "NotAllowedError") {
-        console.error(
-          "Wake Lock request not allowed: The document is not fully active or permission was denied."
-        );
-      } else if (error.name === "AbortError") {
-        console.error("Wake Lock operation was aborted.");
-      } else {
-        console.error("Wake Lock error:", error.message);
-      }
-    } else {
-      console.error("Unknown Wake Lock error:", error);
-    }
-    toast.error(
-      "Application is unable to keep the screen on. Connections may be interrupted when the screen turns off"
-    );
+  private handleWakeLockRelease = () => {
     this.isWakeLockActive = false;
+  };
+
+  private handleWakeLockError(error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "name" in error &&
+      error.name === "AbortError"
+    ) {
+      return;
+    }
+
+    if (!this.hasShownWakeLockToast) {
+      toast.error(
+        "Unable to keep screen awake. Connection may terminate when screen goes off"
+      );
+      this.hasShownWakeLockToast = true;
+    }
+
+    this.scheduleReacquire();
+  }
+
+  private handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      this.scheduleReacquire();
+    }
+  };
+
+  private scheduleReacquire(delay: number = 500) {
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+    }
+
+    this.retryTimeoutId = setTimeout(() => {
+      if (!this.isWakeLockActive && !this.isRequesting && !this.destroyed) {
+        this.requestWakeLock();
+      }
+    }, delay);
+  }
+
+  public async stop(): Promise<void> {
+    this.destroyed = false; // Allow reuse
+
+    if (this.retryTimeoutId) {
+      clearTimeout(this.retryTimeoutId);
+      this.retryTimeoutId = null;
+    }
+
+    if (this.wakeLock) {
+      this.wakeLock.removeEventListener("release", this.handleWakeLockRelease);
+      try {
+        await this.wakeLock.release();
+      } catch {
+        // ignore errors on cleanup
+      }
+      this.wakeLock = null;
+    }
+
+    this.isWakeLockActive = false;
+    this.isRequesting = false;
+    this.hasShownWakeLockToast = false;
+  }
+
+  // Complete cleanup - watch out!
+  public async destroy(): Promise<void> {
+    this.destroyed = true;
+
+    document.removeEventListener(
+      "visibilitychange",
+      this.handleVisibilityChange
+    );
+
+    await this.stop();
+  }
+
+  public static createNewInstance(): WakeLockManager {
+    const oldInstance = WakeLockManager.instance;
+    WakeLockManager.instance = null;
+    WakeLockManager.isCreating = false;
+
+    if (oldInstance) {
+      oldInstance.destroy();
+    }
+
+    return WakeLockManager.getInstance();
   }
 }

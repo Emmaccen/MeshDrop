@@ -1,11 +1,13 @@
 import { useHostState } from "@/app/store/host";
 import { OfferMetadata } from "@/app/store/host/types";
 import { usePeerState } from "@/app/store/peer";
+import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
 import { toast } from "sonner";
 
 export const useConnect = () => {
   const { updatePeerStatePartially, currentPeerState } = usePeerState();
   const { updateHostStatePartially } = useHostState();
+  const firestore = FirestoreSignaling.getInstance();
 
   const requestConnectionFromHost = async (hostOffer: string) => {
     if (!hostOffer) {
@@ -27,14 +29,17 @@ export const useConnect = () => {
 
     try {
       // Process the host's offer
-      const offerData = JSON.parse(hostOffer);
+      const offerData: OfferMetadata = JSON.parse(hostOffer);
       if (!offerData.type || !offerData.sdp) {
         toast.error("Invalid connection offer");
         throw new Error("Invalid SDP format");
       }
 
       await newPeerConnection.setRemoteDescription(
-        new RTCSessionDescription(offerData)
+        new RTCSessionDescription({
+          type: offerData.type,
+          sdp: offerData.sdp,
+        })
       );
 
       // Create an answer
@@ -54,12 +59,15 @@ export const useConnect = () => {
             sdp: answer?.sdp,
             userId: userId,
             username: currentPeerState.username,
+            roomId: offerData.roomId,
           };
           updatePeerStatePartially({
             peerAnswer: JSON.stringify(offerWithMetadata),
             peerConnection: newPeerConnection,
             connectedUsers: [offerData.username ?? "Host"],
           });
+          if (offerData.roomId)
+            firestore.setPeerAnswer(offerData.roomId, offerWithMetadata);
         }
       };
       // toast.success("Host connection processed successfully");

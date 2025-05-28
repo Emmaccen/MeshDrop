@@ -6,22 +6,29 @@ import {
 import { useFileManagerState } from "@/app/store/fileManager";
 import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
+import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
 import { SafeDataChannelSender } from "@/lib/SafeDataChannelSender";
 import { toast } from "sonner";
-
-// export function* chunkUint8Array(data: Uint8Array, chunkSize: number) {
-//   for (let i = 0; i < data.length; i += chunkSize) {
-//     yield data.slice(i, i + chunkSize);
-//   }
-// }
+import { logEvent } from "firebase/analytics";
+import { WakeLockManager } from "@/lib/WakeLockManager";
 export const useSendDataInChunks = () => {
   const { updateFileManagerStatePartially } = useFileManagerState();
+  const keepMyScreenOn = WakeLockManager.getInstance();
+
+  const signaling = FirestoreSignaling.getInstance();
+  const analytics = signaling.getAnalytics();
   const chunkSender = async (
     dataChannel: RTCDataChannel | null,
     message: Message
   ) => {
     // use dataChannelReady for this check
     if (!dataChannel) return;
+
+    if (analytics) {
+      logEvent(analytics, "files_sent", {
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     switch (message.messageType) {
       case "message":
@@ -53,7 +60,7 @@ export const useSendDataInChunks = () => {
         );
 
         // Send each chunk with metadata
-        // Potential 🐛 here if you edit without thinking, if user sends 10k emojis and we've calc/assumed size for CHUNK_SIZE_SAFE_LIMIT above
+        // Potential 🐛 here. Edit with caution, if user sends 10k emojis and we've calc/assumed size for CHUNK_SIZE_SAFE_LIMIT above
         // additional Array.from(chunk) and metadata increases this limit, so we're going with CHUNK_SIZE_MESSAGE_SAFE_LIMIT
 
         for (let i = 0; i < totalChunks; i++) {
@@ -76,6 +83,13 @@ export const useSendDataInChunks = () => {
         // Handle file transfer here
         if (!message.file) return;
 
+        if (
+          keepMyScreenOn.isWakeLockSupported &&
+          !keepMyScreenOn.isWakeLockActive
+        ) {
+          keepMyScreenOn.requestWakeLock();
+        }
+
         const file = message.file;
         const totalFileChunks = Math.ceil(file.size / CHUNK_SIZE_SAFE_LIMIT);
         let fileChunksSent = 0;
@@ -93,6 +107,14 @@ export const useSendDataInChunks = () => {
                 },
               });
             }
+            if (parsed.chunkIndex === parsed.totalChunks) {
+              if (
+                keepMyScreenOn.isWakeLockSupported &&
+                keepMyScreenOn.isWakeLockActive
+              ) {
+                keepMyScreenOn.stop();
+              }
+            }
           }
         );
         for (let i = 0; i < totalFileChunks; i++) {
@@ -104,11 +126,17 @@ export const useSendDataInChunks = () => {
           const chunkMessage: Message = {
             ...message,
             chunkData: Array.from(new Uint8Array(buffer)),
-            chunkIndex: i,
+            chunkIndex: i + 1,
             totalChunks: totalFileChunks,
           };
+          // Wait if overflow flag is active
+          while (safeSender.isFlushingOverflow) {
+            await new Promise((resolve) => setTimeout(resolve, 25));
+          }
+
           safeSender.enqueue(chunkMessage);
         }
+
         break;
 
       default:

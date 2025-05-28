@@ -7,6 +7,7 @@ export interface HostStateType {
   username: string | null;
   userId: string | null;
   connectedUsers: string[];
+  roomId: string | null;
 }
 
 export interface OfferMetadata {
@@ -14,4 +15,5 @@ export interface OfferMetadata {
   sdp: string | undefined;
   userId: string;
   username: string | null;
+  roomId: string | null;
 }
