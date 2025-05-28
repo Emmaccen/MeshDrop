@@ -75,6 +75,10 @@ MeshDrop works on all modern browsers that support WebRTC data channels, includi
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Changelog
+
+Track new features, fixes and updates from the [changelog](https://github.com/Emmaccen/MeshDrop/blob/dev/changelog.md)
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
