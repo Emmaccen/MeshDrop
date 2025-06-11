@@ -56,12 +56,45 @@ MeshDrop leverages several modern web technologies:
 
 ## Getting Started
 
-1. Clone this repository
-2. Run `npm install` to install dependencies
-3. Start the development server with `npm run dev`
-4. Open the application in browsers on multiple devices connected to the same network
-5. Use the QR code to establish a connection between devices
-6. Begin chatting and transferring files
+To get started with MeshDrop, follow these steps:
+
+1.  Clone this repository.
+2.  Ensure you have Node.js and npm installed.
+3.  Run `npm install` to install dependencies.
+
+### Environment Variables
+
+Before running the application, you need to set up your Firebase configuration. Create a `.env.local` or `.env` file in the root directory of the project and add the following environment variables:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=YOUR_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=YOUR_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
+NODE_ENV=development
+```
+
+Replace the `YOUR_*` placeholders with your actual Firebase project credentials. You can obtain these from the Firebase console.
+
+`NODE_ENV` is optional, and defaults to `development` if not set.
+
+### Running the Application
+
+You can start the development server using one of the following commands:
+
+```bash
+npm run dev
+```
+
+This command uses the turbopack bundler, which can provide faster development builds. However, if you encounter issues, you can use the legacy development server:
+
+```bash
+npm run dev:legacy
+```
+
+Once the development server is running, open the application in browsers on multiple devices connected to the same network. Use the QR code to establish a connection between devices, and you can then begin chatting and transferring files.
 
 ## Browser Compatibility
 
