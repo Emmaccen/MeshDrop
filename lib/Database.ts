@@ -4,7 +4,7 @@ const DB_NAME = "meshdrop";
 const CHUNK_STORE = "mesh-chunks";
 const METADATA_STORE = "mesh-metadata";
 
-export class FileStreamingManager {
+export class FileDatabaseManager {
   private db: IDBDatabase | null = null;
 
   async init(): Promise<void> {
@@ -144,7 +144,7 @@ export class FileStreamingManager {
       const request = store.get(`${fileId}-${chunkIndex}`);
       request.onsuccess = () => {
         const result = request.result;
-        resolve(result || null); // Return the entire result object, not result.data
+        resolve(result || null);
       };
       request.onerror = () => reject(request.error);
     });

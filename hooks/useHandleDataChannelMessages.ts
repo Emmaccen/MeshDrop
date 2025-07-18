@@ -4,7 +4,7 @@ import { useFileManagerState } from "@/app/store/fileManager";
 import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
 import { useVisibilityNotification } from "@/hooks/useVisibilityNotification";
-import { FileStreamingManager } from "@/lib/Database";
+import { FileDatabaseManager } from "@/lib/Database";
 import FileChunksManager from "@/lib/FileChunkManager";
 import { toast } from "sonner";
 
@@ -13,7 +13,7 @@ let notificationRequested = false;
 export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
-  const fileStreamManager = new FileStreamingManager();
+  const fileStreamManager = new FileDatabaseManager();
   fileStreamManager.init();
   const keepMyScreenOn = WakeLockManager.getInstance();
   const {

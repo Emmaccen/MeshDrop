@@ -12,7 +12,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import * as React from "react";
 import { useEffect } from "react";
-import { FileStreamingManager } from "@/lib/Database";
+import { FileDatabaseManager } from "@/lib/Database";
 import { usePWAInstallTracking } from "@/hooks/usePWAInstallTracking";
 export default function StoreFrontLayout({
   children,
@@ -21,7 +21,7 @@ export default function StoreFrontLayout({
 }) {
   usePWAInstallTracking();
   useEffect(() => {
-    const database = new FileStreamingManager();
+    const database = new FileDatabaseManager();
     database.init();
     database.clearChunkStore();
   }, []);
