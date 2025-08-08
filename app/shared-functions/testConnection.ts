@@ -126,7 +126,7 @@ export async function testP2PConnectivity() {
             candidates: results,
           });
         }
-      }, 10000); // ICE gathering can take some time
+      }, 60_000); // ICE gathering can take some time
     }
   );
 }
