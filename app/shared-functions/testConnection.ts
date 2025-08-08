@@ -1,3 +1,5 @@
+import { stunServers } from "../_data/constants";
+
 export type ConnectionHealthConnectionType =
   | "p2p_possible"
   | "host_only"
@@ -30,7 +32,7 @@ export async function testP2PConnectivity() {
   return new Promise(
     (resolve: ({ verdict, candidates }: ConnectionHealth) => unknown) => {
       const pc = new RTCPeerConnection({
-        iceServers: [],
+        iceServers: [...stunServers],
       });
 
       const results = {

@@ -70,7 +70,7 @@ export const PageHeader = () => {
                   className={` ${
                     connectionHealth?.verdict === "host_only"
                       ? connectionColor[1]
-                      : connectionColor[0]
+                      : connectionColor[2]
                   } w-4 h-4`}
                 />
               </TooltipTrigger>
