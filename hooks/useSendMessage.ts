@@ -8,9 +8,9 @@ import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
 import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
 import { SafeDataChannelSender } from "@/lib/SafeDataChannelSender";
-import { toast } from "sonner";
-import { logEvent } from "firebase/analytics";
 import { WakeLockManager } from "@/lib/WakeLockManager";
+import { logEvent } from "firebase/analytics";
+import { toast } from "sonner";
 export const useSendDataInChunks = () => {
   const { updateFileManagerStatePartially } = useFileManagerState();
   const keepMyScreenOn = WakeLockManager.getInstance();
@@ -164,8 +164,6 @@ export const useSendMessage = () => {
         const messageWithMetaData: Message = {
           ...message,
           url: URL.createObjectURL(message.file!),
-          size: message.size,
-          fileName: message.fileName,
           fileType: normalizedType,
         };
         updateIfExistAddIfNot(messageWithMetaData.id, messageWithMetaData);

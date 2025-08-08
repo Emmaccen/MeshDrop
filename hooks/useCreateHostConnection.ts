@@ -5,6 +5,7 @@ import generateReadableRoomId from "@/lib/generateReadableRoomId";
 import { toast } from "sonner";
 import { useConnect } from "@/hooks/useConnect";
 import { useMiscState } from "@/app/store/misc";
+import { stunServers } from "@/app/_data/constants";
 export const useCreateHostConnection = () => {
   const { updateHostStatePartially } = useHostState();
   const firestore = FirestoreSignaling.getInstance();
@@ -13,7 +14,7 @@ export const useCreateHostConnection = () => {
 
   const createHost = async (config: { username: string; userId: string }) => {
     const newPeerConnection = new RTCPeerConnection({
-      iceServers: [], // empty for fully offline connections
+      iceServers: [...stunServers],
     });
 
     newPeerConnection.onicecandidate = (event) => {

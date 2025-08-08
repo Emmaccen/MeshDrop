@@ -45,8 +45,7 @@ export const useTransferFile = () => {
       ...metadata,
       messageType: "metadata",
     };
-
-    // // Send enhanced metadata first
+    // Send enhanced metadata first
     sendMessage(fileMetadata, dataChannel);
 
     const restOfChunks: Message = {

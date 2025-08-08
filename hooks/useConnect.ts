@@ -1,3 +1,4 @@
+import { stunServers } from "@/app/_data/constants";
 import { useHostState } from "@/app/store/host";
 import { OfferMetadata } from "@/app/store/host/types";
 import { usePeerState } from "@/app/store/peer";
@@ -16,7 +17,7 @@ export const useConnect = () => {
     }
 
     const newPeerConnection = new RTCPeerConnection({
-      iceServers: [], // empty for fully offline connections
+      iceServers: [...stunServers],
     });
 
     // Set up data channel handler
