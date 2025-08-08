@@ -36,81 +36,104 @@ import { trackPWAUsage } from "@/hooks/usePWAInstallTracking";
 
 export default function Page() {
   const [message, setMessage] = useState("");
-  const { sendMessage } = useSendMessage();
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { values: host } = useConnectionStateManager<HostStateType>(hostState);
   const { values: peer } = useConnectionStateManager<PeerStateType>(peerState);
   const { currentMessengerState } = useMessengerState();
   const { showModal, imVisible, hideModal } = useVisibilityState();
+  const { sendMessage } = useSendMessage();
+  const { startTransfer } = useTransferFile();
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { startTransfer } = useTransferFile();
 
   useEffect(() => {
     trackPWAUsage();
   }, []);
+
   useEffect(() => {
+    scrollToBottom();
+  }, [currentMessengerState.messages.length]);
+
+  const scrollToBottom = () => {
     if (scrollAreaRef.current && !message.length) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
-  }, [currentMessengerState.messages.length]);
-  const send = () => {
+  };
+
+  const sendTextMessage = (
+    dataChannel: RTCDataChannel | null,
+    senderInfo: {
+      username: string | null | undefined;
+      userId: string | undefined;
+    }
+  ) => {
+    if (!dataChannel) return;
     const id = crypto.randomUUID();
-    if (host.peerConnection)
-      sendMessage(
-        {
-          id,
-          message,
-          timestamp: new Date().toISOString(),
-          sender: host.username ?? "host",
-          senderId: host.userId,
-          messageType: "message",
-        },
-        host.dataChannel
-      );
-    else
-      sendMessage(
-        {
-          id,
-          message,
-          timestamp: new Date().toISOString(),
-          sender: peer.username ?? "peer",
-          senderId: peer.userId,
-          messageType: "message",
-        },
-        peer.dataChannel
-      );
+    sendMessage(
+      {
+        id,
+        message,
+        timestamp: new Date().toISOString(),
+        sender: senderInfo.username ?? "sender",
+        senderId: senderInfo.userId!,
+        messageType: "message",
+      },
+      dataChannel
+    );
     setMessage("");
   };
 
-  const sendFile = () => {
+  const sendFileMessage = (
+    dataChannel: RTCDataChannel | null,
+    senderInfo: { username: string; userId: string },
+    file: File
+  ) => {
+    if (!dataChannel) return;
     const id = crypto.randomUUID();
-    if (!selectedFile) return;
-    const file = selectedFile;
-    if (host.peerConnection)
-      startTransfer(host.dataChannel, {
-        id,
-        message,
-        timestamp: new Date().toISOString(),
-        sender: host.username ?? "host",
-        senderId: host.userId,
-        messageType: "file",
-        file: file,
-      });
-    else
-      startTransfer(peer.dataChannel, {
-        id,
-        message,
-        timestamp: new Date().toISOString(),
-        sender: peer.username ?? "peer",
-        senderId: peer.userId,
-        messageType: "file",
-        file: file,
-      });
+    startTransfer(dataChannel, {
+      id,
+      message,
+      timestamp: new Date().toISOString(),
+      sender: senderInfo.username ?? "sender",
+      senderId: senderInfo.userId,
+      messageType: "file",
+      file: file,
+    });
     setMessage("");
     hideModal(ModalIds.fileMessageCaptionModal);
     setSelectedFile(null);
+  };
+
+  const send = () => {
+    if (host.peerConnection && host.dataChannel) {
+      sendTextMessage(host.dataChannel, {
+        username: host.username,
+        userId: host.userId!,
+      });
+    } else if (peer.peerConnection && peer.dataChannel) {
+      sendTextMessage(peer.dataChannel, {
+        username: peer.username,
+        userId: peer.userId!,
+      });
+    }
+  };
+
+  const sendFile = () => {
+    if (!selectedFile) return;
+
+    if (host.peerConnection && host.dataChannel) {
+      sendFileMessage(
+        host.dataChannel,
+        { username: host.username!, userId: host.userId! },
+        selectedFile
+      );
+    } else if (peer.peerConnection && peer.dataChannel) {
+      sendFileMessage(
+        peer.dataChannel,
+        { username: peer.username!, userId: peer.userId! },
+        selectedFile
+      );
+    }
   };
 
   useEffect(() => {
