@@ -84,10 +84,10 @@ export default function Page() {
     setMessage("");
   };
 
-  const sendFile = () => {
+  const sendFile = (multiFile?: File) => {
     const id = crypto.randomUUID();
-    if (!selectedFile) return;
-    const file = selectedFile;
+    if (!selectedFile && !multiFile) return;
+    const file = selectedFile ?? multiFile;
     if (host.peerConnection)
       startTransfer(host.dataChannel, {
         id,
@@ -243,8 +243,19 @@ export default function Page() {
                   type="file"
                   id="fileUpload"
                   className="hidden"
+                  multiple={true}
                   onChange={(e) => {
-                    setSelectedFile(e.target.files?.[0] || null);
+                    if (!e.target.files?.[0]) return;
+                    if (e.target.files.length === 1) {
+                      setSelectedFile(e.target.files?.[0] || null);
+                    } else {
+                      // if multiple files are selected, send them one by one
+                      Array.from(e.target.files).forEach((file, index) => {
+                        setTimeout(() => {
+                          sendFile(file);
+                        }, index * 500);
+                      });
+                    }
                   }}
                 />
               </label>
