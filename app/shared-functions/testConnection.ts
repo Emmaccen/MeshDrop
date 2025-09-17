@@ -13,7 +13,12 @@ export interface ConnectionHealth {
   verdict: ConnectionHealthConnectionType;
   candidates: Record<ConnectionHealthCandidateType, boolean>;
 }
-
+export interface Verdict {
+  host: false;
+  srflx: false;
+  prflx: false;
+  relay: false;
+}
 /**
  * Tests the peer-to-peer connectivity by creating a WebRTC connection
  * and analyzing the ICE candidates gathered during the process.
@@ -41,7 +46,11 @@ export async function testP2PConnectivity() {
         prflx: false,
         relay: false,
       };
-
+      const getVerdict = () => {
+        if (results.srflx || results.prflx) return "p2p_possible";
+        if (results.host) return "host_only";
+        return "no_p2p";
+      };
       let resolved = false;
 
       pc.onicecandidate = (event) => {
@@ -62,17 +71,8 @@ export async function testP2PConnectivity() {
             resolved = true;
             pc.close();
 
-            let verdict: ConnectionHealthConnectionType;
-            if (results.srflx || results.prflx) {
-              verdict = "p2p_possible";
-            } else if (results.host) {
-              verdict = "host_only";
-            } else {
-              verdict = "no_p2p";
-            }
-
             resolve({
-              verdict,
+              verdict: getVerdict(),
               candidates: results,
             });
           }
@@ -84,17 +84,8 @@ export async function testP2PConnectivity() {
           resolved = true;
           pc.close();
 
-          let verdict: ConnectionHealthConnectionType;
-          if (results.srflx || results.prflx) {
-            verdict = "p2p_possible";
-          } else if (results.host) {
-            verdict = "host_only";
-          } else {
-            verdict = "no_p2p";
-          }
-
           resolve({
-            verdict,
+            verdict: getVerdict(),
             candidates: results,
           });
         }
