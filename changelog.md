@@ -1,3 +1,12 @@
+## [v0.1.0-beta.4] - 17-09-2025
+
+### ✨ Enhancements
+
+- **Improved User Experience**
+  - Added multi-file picker for sharing files
+  - Multiple media selection now sends in a single burst
+  - Improved connection test feedback
+
 ## [v0.1.0-beta.3] - 8-08-2025
 
 ### ✨ Enhancements
