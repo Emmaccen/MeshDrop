@@ -1,7 +1,12 @@
-import { OfferMetadata } from "@/app/store/host/types";
-import { getApp, getApps, initializeApp } from "firebase/app";
-import { getAnalytics, Analytics } from "firebase/analytics";
 import {
+  MultiChannelRoomAnswer,
+  MultiChannelRoomOffer,
+  OfferMetadata,
+} from "@/app/store/host/types";
+import { Analytics, getAnalytics } from "firebase/analytics";
+import { getApp, getApps, initializeApp } from "firebase/app";
+import {
+  arrayUnion,
   doc,
   Firestore,
   getDoc,
@@ -65,6 +70,48 @@ export class FirestoreSignaling {
     return roomRef;
   }
 
+  sendIceCandidate = async ({
+    roomId,
+    candidate,
+    fromHost,
+  }: {
+    roomId: string;
+    candidate: RTCIceCandidate;
+    fromHost: boolean;
+  }) => {
+    const roomRef = doc(this.database, "rooms", roomId);
+    await updateDoc(
+      roomRef,
+      "candidates",
+      arrayUnion({
+        candidate: candidate.toJSON(),
+        fromHost,
+        timestamp: Date.now(),
+      })
+    );
+  };
+
+  public async createMultiChannelRoomAsHost(
+    roomId: string,
+    offers: MultiChannelRoomOffer[]
+  ) {
+    const roomRef = doc(this.database, "multi-channel-rooms", roomId);
+
+    await setDoc(roomRef, {
+      createdAt: serverTimestamp(),
+      offers,
+    });
+
+    if (this.analytics) {
+      const { logEvent } = await import("firebase/analytics");
+      logEvent(this.analytics, "multi_channel_room_created", {
+        room_id: roomId,
+      });
+    }
+
+    return roomRef;
+  }
+
   public async getHostOffer(roomId: string): Promise<OfferMetadata | null> {
     const roomRef = doc(this.database, "rooms", roomId);
     const roomSnap = await getDoc(roomRef);
@@ -79,14 +126,47 @@ export class FirestoreSignaling {
 
     return (data?.offer as OfferMetadata) ?? null;
   }
+  public async getMultiChannelHostOffer(
+    roomId: string
+  ): Promise<MultiChannelRoomOffer[] | null> {
+    const roomRef = doc(this.database, "multi-channel-rooms", roomId);
+    const roomSnap = await getDoc(roomRef);
+    const data = roomSnap.data();
 
-  public async setPeerAnswer(roomId: string, answer: OfferMetadata) {
+    if (this.analytics && data?.offer) {
+      const { logEvent } = await import("firebase/analytics");
+      logEvent(this.analytics, "multi_channel_offer_retrieved", {
+        room_id: roomId,
+      });
+    }
+    return (data?.offers as MultiChannelRoomOffer[]) ?? null;
+  }
+
+  public async setPeerAnswer(
+    roomId: string,
+    answer: OfferMetadata,
+    peerConnection: RTCPeerConnection
+  ) {
     const roomRef = doc(this.database, "rooms", roomId);
     await updateDoc(roomRef, { answer });
-
+    this.listenForIceCandidates(roomId, peerConnection, "peer");
     if (this.analytics) {
       const { logEvent } = await import("firebase/analytics");
       logEvent(this.analytics, "peer_answer_set", {
+        room_id: roomId,
+      });
+    }
+  }
+  public async setMultiChannelPeerAnswers(
+    roomId: string,
+    answers: MultiChannelRoomAnswer[]
+  ) {
+    const roomRef = doc(this.database, "multi-channel-rooms", roomId);
+    await updateDoc(roomRef, { answers });
+
+    if (this.analytics) {
+      const { logEvent } = await import("firebase/analytics");
+      logEvent(this.analytics, "multi_channel_peer_answer_set", {
         room_id: roomId,
       });
     }
@@ -110,6 +190,81 @@ export class FirestoreSignaling {
         if (this.analytics) {
           import("firebase/analytics").then(({ logEvent }) => {
             logEvent(this.analytics!, "peer_answer_received", {
+              room_id: roomId,
+            });
+          });
+        }
+        this.listenForIceCandidates(roomId, peerConnection, "host");
+        unsubscribe();
+      }
+    });
+    return unsubscribe;
+  };
+
+  listenForIceCandidates = async (
+    roomId: string,
+    peerConnection: RTCPeerConnection | null,
+    listenAs: string = "host"
+  ) => {
+    const roomRef = doc(this.database, "rooms", roomId);
+    const processedCandidates = new Set<string>();
+
+    const unsubscribe = onSnapshot(roomRef, (docSnap) => {
+      const data = docSnap.data();
+      if (data?.candidates) {
+        const candidates = data.candidates as {
+          candidate: RTCIceCandidate;
+          fromHost: boolean;
+          timestamp: number;
+        }[];
+        candidates
+          .filter((candidate) =>
+            listenAs === "host"
+              ? candidate.fromHost === false
+              : candidate.fromHost
+          )
+          .filter((candidateData) => {
+            const key = `${candidateData.timestamp}-${candidateData.fromHost}`;
+            if (processedCandidates.has(key)) {
+              return false; // Already processed
+            }
+            processedCandidates.add(key);
+            return true;
+          })
+
+          .forEach((candidateData) => {
+            console.log("Received ICE candidate:", candidateData);
+            const candidate = candidateData.candidate;
+            if (peerConnection && candidate) {
+              peerConnection.addIceCandidate(candidate);
+            }
+          });
+      }
+    });
+    return unsubscribe;
+  };
+
+  listenForMultiChannelPeerAnswers = async (
+    roomId: string,
+    peerConnections: RTCPeerConnection[] | null,
+    onAnswer: (
+      incomingConnectionRequestHandshake: string[],
+      peerConnections: RTCPeerConnection[] | null
+    ) => void
+  ) => {
+    const roomRef = doc(this.database, "multi-channel-rooms", roomId);
+
+    const unsubscribe = onSnapshot(roomRef, (docSnap) => {
+      const data = docSnap.data();
+      if (data?.answer) {
+        const answers = data.answer as MultiChannelRoomAnswer[];
+
+        const answerStrings = answers.map((answer) => JSON.stringify(answer));
+        onAnswer(answerStrings, peerConnections);
+
+        if (this.analytics) {
+          import("firebase/analytics").then(({ logEvent }) => {
+            logEvent(this.analytics!, "multi_channel_peer_answer_received", {
               room_id: roomId,
             });
           });

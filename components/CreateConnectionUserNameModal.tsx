@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useCreateHostConnection } from "@/hooks/useCreateHostConnection";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMiscState } from "@/app/store/misc";
 
 export const CreateConnectionUserNameModal = () => {
@@ -28,6 +28,15 @@ export const CreateConnectionUserNameModal = () => {
   const [imLoading, setImLoading] = useState({
     id: "",
   });
+  useEffect(() => {
+    if (localStorage.getItem("meshdrop_username"))
+      setUserName(
+        localStorage.getItem("meshdrop_username") ??
+          currentHostState.username ??
+          ""
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <Dialog
       open={imVisible(ModalIds.createConnectionUserNameModal)}
@@ -60,6 +69,7 @@ export const CreateConnectionUserNameModal = () => {
                 userId,
               });
               resetPeerState();
+              localStorage.setItem("meshdrop_username", username);
               hidePreviousThenShowNext(
                 ModalIds.createConnectionUserNameModal,
                 currentMiscState.discoveryMode === "offline"
