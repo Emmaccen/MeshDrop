@@ -1,8 +1,8 @@
-import { WakeLockManager } from "@/lib/WakeLockManager";
 // import { MAX_QUEUE_LENGTH } from "@/app/store/constants";
 import { useFileManagerState } from "@/app/store/fileManager";
 import { useMessengerState } from "@/app/store/messenger";
 import { Message } from "@/app/store/messenger/types";
+import { useSilentAudioKeepAlive } from "@/hooks/useSilentAudioKeepAlive";
 import { useVisibilityNotification } from "@/hooks/useVisibilityNotification";
 import { FileDatabaseManager } from "@/lib/Database";
 import FileChunksManager from "@/lib/FileChunkManager";
@@ -10,12 +10,19 @@ import { toast } from "sonner";
 
 let notificationRequested = false;
 
+// Tracks transfers that have failed so we can suppress further toasts for them
+const failedTransfers = new Set<string>();
+
 export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
   const fileStreamManager = new FileDatabaseManager();
   fileStreamManager.init();
-  const keepMyScreenOn = WakeLockManager.getInstance();
+
+  // Use silent audio keep-alive directly — this hook is a React hook so it's allowed
+  const { start: startKeepAlive, stop: stopKeepAlive } =
+    useSilentAudioKeepAlive();
+
   const {
     notifyIfPageHiddenOrInBackground,
     requestPermissionToShowNotification,
@@ -29,6 +36,11 @@ export const useHandleDataChannelMessages = () => {
     if (!notificationRequested) {
       requestPermissionToShowNotification();
       notificationRequested = true;
+    }
+
+    // Skip processing chunks for already-failed transfers to prevent toast storms
+    if (data.messageType === "file" && failedTransfers.has(data.id)) {
+      return;
     }
 
     try {
@@ -76,12 +88,8 @@ export const useHandleDataChannelMessages = () => {
           },
         });
         addNewMessage(data);
-        if (
-          keepMyScreenOn.isWakeLockSupported &&
-          !keepMyScreenOn.isWakeLockActive
-        ) {
-          keepMyScreenOn.requestWakeLock();
-        }
+        // Start silent audio keep-alive when a file transfer begins
+        startKeepAlive();
       } else if (data.messageType === "file") {
         const fileMetadata = fileStreamManager.getFileMetadata(data.id);
 
@@ -89,15 +97,37 @@ export const useHandleDataChannelMessages = () => {
           throw new Error("Transfer data not found!");
         }
 
-        fileStreamManager.saveChunk(data);
-        const progress = (data.chunkIndex! / data.totalChunks!) * 100;
+        // IMPORTANT: await the save so the chunk is in IndexedDB before we check completion
+        await fileStreamManager.saveChunk(data);
+
+        // Ensure fileChunksManager has an entry for this file
+        // With multichannel, file chunks can race ahead of the metadata entry
+        if (!fileChunksManager.getFileChunk(data.id)) {
+          // Initialize with a dummy metadata entry so addChunk("file") works
+          fileChunksManager.addChunk(data.id, {
+            ...data,
+            messageType: "metadata",
+          });
+        }
+
+        // Track received chunks using fileChunksManager as a counter
+        fileChunksManager.addChunk(data.id, data);
+        const receivedChunks = fileChunksManager.getFileChunk(data.id);
+        const receivedCount = receivedChunks
+          ? Object.keys(receivedChunks.chunks).length
+          : 0;
+
+        const progress = (receivedCount / data.totalChunks!) * 100;
+
         updateFileManagerStatePartially({
           [data.id]: {
             transferProgress: progress,
             isTransferring: true,
           },
         });
-        if (data.chunkIndex! === data.totalChunks) {
+
+        // Only assemble when ALL chunks have been received and saved
+        if (receivedCount === data.totalChunks!) {
           const downloadUrl = await fileStreamManager.getDownloadUrl(data.id);
           if (downloadUrl) {
             updateMessageById(data.id, {
@@ -116,18 +146,22 @@ export const useHandleDataChannelMessages = () => {
             body: data.fileName,
           });
           fileChunksManager.removeFile(data.id);
-          if (
-            keepMyScreenOn.isWakeLockSupported &&
-            keepMyScreenOn.isWakeLockActive &&
-            fileChunksManager.getAllFiles().size === 0
-          ) {
-            keepMyScreenOn.stop();
+
+          // Stop keep-alive once all transfers are done
+          if (fileChunksManager.getAllFiles().size === 0) {
+            stopKeepAlive();
           }
         }
       }
     } catch (error) {
       console.error("Error handling message:", error);
-      toast.error("An error occurred while handling the message");
+
+      // Only show the error toast once per failed transfer ID
+      if (!failedTransfers.has(data.id)) {
+        failedTransfers.add(data.id);
+        toast.error("An error occurred while receiving the file");
+      }
+
       updateFileManagerStatePartially({
         [data.id]: {
           transferProgress:
@@ -135,16 +169,32 @@ export const useHandleDataChannelMessages = () => {
           isTransferring: false,
         },
       });
-      // throw error;
-      // fileChunksManager.removeFile(data.id);
-      if (
-        keepMyScreenOn.isWakeLockSupported &&
-        keepMyScreenOn.isWakeLockActive
-      ) {
-        keepMyScreenOn.stop();
+
+      // Stop keep-alive on error if nothing else is in flight
+      if (fileChunksManager.getAllFiles().size === 0) {
+        stopKeepAlive();
       }
     }
   };
 
-  return { handleDataChannelMessage };
+  /**
+   * Call this when the data channel closes mid-transfer to clean up
+   * all in-flight transfers and stop the keep-alive.
+   */
+  const handleChannelClose = () => {
+    stopKeepAlive();
+    // Mark all in-flight transfers as failed so future chunks are suppressed
+    const inFlight = fileChunksManager.getAllFiles();
+    inFlight.forEach((_, fileId) => {
+      failedTransfers.add(fileId);
+      updateFileManagerStatePartially({
+        [fileId]: {
+          transferProgress: 0,
+          isTransferring: false,
+        },
+      });
+    });
+  };
+
+  return { handleDataChannelMessage, handleChannelClose };
 };
