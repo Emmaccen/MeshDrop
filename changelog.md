@@ -1,3 +1,89 @@
+## [v0.1.0-beta.5] - 01-06-2026
+
+### 🚀 Features
+
+- **Fast Send Mode**
+  - New `/fast` route powered by 4 parallel WebRTC data channels for up to 4× faster file transfers.
+  - Peers connect via a short **Room ID** shared over internet for the handshake — actual file transfer is fully local.
+  - Multi-channel ICE negotiation via Firebase Firestore signaling.
+  - Multichannel round-robin chunk distribution with per-channel backpressure (`SafeDataChannelSender`).
+
+- **Silent Audio Keep-Alive**
+  - Replaced Screen Wake Lock API with a near-silent Web Audio oscillator (`useSilentAudioKeepAlive`) to prevent browser tab throttling on mobile during transfers.
+  - More reliable than Wake Lock across browsers, especially iOS Safari.
+  - Activates automatically when a connection is established; stops when idle.
+
+### ✨ Enhancements
+
+- **Persistent Username**
+  - Username is now stored in `localStorage` (`meshdrop_username`) after first entry.
+  - On subsequent connections, both Create and Join modals skip straight to the next step — no re-typing needed.
+  - Username is visible and editable at any time from the sidebar footer chip.
+
+- **Improved Onboarding**
+  - Both Standard and Fast Send pages now show step-by-step setup guides for first-time users.
+  - Clear same-network requirement notice: both devices must be on the same router **or hotspot**.
+  - Explicit explanation that "Online" mode only uses internet for the initial handshake — file transfer is always local.
+  - Fast Send page explains multichannel transfer and links back to Standard mode.
+
+- **Standard ↔ Fast Send Navigation**
+  - New **Modes** section in the sidebar lets users switch between Standard and Fast Send instantly.
+  - "Sending large files? Try Fast Send" upsell on the Standard page's onboarding card.
+
+- **Connection Mode Discovery Descriptions**
+  - Online mode: room code shared via internet for the handshake only; no internet needed for the actual transfer.
+  - Offline mode: pure QR code scan, zero internet dependency end-to-end.
+
+- **Removed Inaccurate Connection Health Indicator**
+  - Removed the `testP2PConnectivity` header badge — it was unreliable and didn't reflect real transfer capability.
+
+### 🐞 Bug Fixes
+
+- **Toast Storm on Connection Failure**
+  - Fixed an infinite loop of error toasts when a connection dropped mid-transfer.
+  - Each failed transfer ID is now tracked; further chunks for that ID are silently discarded after the first error toast.
+  - `handleChannelClose()` immediately marks all in-flight transfers as stopped and halts keep-alive.
+  - Fast Send disconnect fires a single deduped toast using Sonner's `id` option.
+
+- **Auto-Scroll on Classic Page**
+  - Fixed scroll-to-bottom not working reliably on the Standard chat page (Radix `ScrollArea` viewport wrapper issue).
+  - Now uses the same `scrollIntoView` sentinel `<div>` pattern already in use on Fast Send.
+
+- **Username Never Persisted on Join**
+  - `JoinConnectionUserNameModal` previously never saved the username to `localStorage`. Fixed.
+
+- **Pre-existing TypeScript Null Errors**
+  - Added non-null assertions in `useMultiChannelConnect.ts` where TypeScript lost narrowing after object spread reassignment.
+
+### 🎨 UI/UX Updates
+
+- **Chat Bubble Redesign**
+  - Sent messages: primary color background, slide-in from right, `rounded-2xl rounded-tr-sm` shape.
+  - Received messages: muted background, slide-in from left, `rounded-2xl rounded-tl-sm` shape.
+  - Direction-aware slide-in CSS animations (`animate-slide-in-right` / `animate-slide-in-left`).
+  - Cleaner timestamp + sender layout, thinner progress bar, proper Download icon.
+
+- **Input Disabled States**
+  - Message textarea and file picker are now visually disabled with `cursor-not-allowed opacity-50` when no data channel is active.
+  - Placeholder text reflects connection state ("Connect a device to start chatting…").
+
+- **Inter Font**
+  - Switched to Inter via `next/font/google` for improved readability across all platforms.
+
+### ⚡️ Performance Improvements
+
+- Silent audio keep-alive is significantly lighter on battery and CPU than Screen Wake Lock re-acquisition cycles.
+- Firestore listener teardown on multichannel answer receipt prevents stale snapshot accumulation.
+
+---
+
+### 📌 Known Limitations
+
+- Fast Send uses internet-only signaling (Room ID via Firestore); QR-based peer discovery is for Standard mode only.
+- Hotspot-based connections may work but are not guaranteed depending on device NAT configuration.
+
+---
+
 ## [v0.1.0-beta.4] - 17-09-2025
 
 ### ✨ Enhancements
@@ -12,7 +98,6 @@
 ### ✨ Enhancements
 
 - **Improved Device Discoverability**
-
   - Added STUN URLs to help devices expose IPs and make connection discovery seamless.
   - Added automatic connection health check when the user loads the app.
   - Included connection status messages to help users predict if a connection will succeed.
@@ -60,7 +145,6 @@ If you have ideas or proof-of-concepts, feel free to open a discussion or PR! �
   MeshDrop now prevents the screen from dimming or sleeping during active file transfers, improving reliability especially during long sends.
 
 - **PWA Installation Support**
-
   - Added manual “Install App” button for Progressive Web App installs.
   - Tracks install events and engagement for future UX improvements.
 
