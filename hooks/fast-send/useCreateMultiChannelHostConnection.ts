@@ -51,7 +51,8 @@ export const useCreateMultiChannelHostConnection = () => {
 
       const newDataChannel = newPeerConnection.createDataChannel(`p2p-${i}`, {
         ordered: true,
-        maxRetransmits: 3,
+        // No maxRetransmits = reliable delivery (like TCP)
+        // maxRetransmits: 3 was causing silent chunk loss under multichannel congestion
       });
       // connections.push({
       //   peerConnection: newPeerConnection,
@@ -73,30 +74,68 @@ export const useCreateMultiChannelHostConnection = () => {
     }
 
     try {
+      let isRoomCreated = false;
+      const candidatesBuffer: {
+        roomId: string;
+        candidate: RTCIceCandidate;
+        fromHost: boolean;
+        pcIndex: number;
+      }[] = [];
+
       for (
         let i = 0;
         i < (hostMultiConnectionData.peerConnection?.length ?? 0);
         i++
       ) {
-        if (
-          !hostMultiConnectionData.peerConnection ||
-          !hostMultiConnectionData.dataChannel
-        )
+        const pc = hostMultiConnectionData.peerConnection![i];
+        if (!pc || !hostMultiConnectionData.dataChannel)
           throw new Error(
-            "Peer connection or data channel is not initialized properly"
+            "Peer connection or data channel is not initialized properly",
           );
 
-        const offer = await hostMultiConnectionData.peerConnection[
-          i
-        ].createOffer();
-        await hostMultiConnectionData.peerConnection[i].setLocalDescription(
-          offer
-        );
-        // offers.push({
-        //   type: offer.type,
-        //   sdp: offer.sdp,
-        //   userId: userId,
-        // });
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            const candidateData = {
+              roomId,
+              candidate: event.candidate,
+              fromHost: true,
+              pcIndex: i,
+            };
+            if (isRoomCreated) {
+              firestore.sendMultiChannelIceCandidate(candidateData);
+            } else {
+              candidatesBuffer.push(candidateData);
+            }
+          }
+        };
+
+        pc.onconnectionstatechange = () => {
+          console.log(`PC ${i} state change: ${pc.connectionState}`);
+          hostMultiConnectionData.connectionState[i] = pc.connectionState;
+          updateHostMultiConnectionStatePartially({
+            connectionState: [...hostMultiConnectionData.connectionState],
+          });
+        };
+
+        const dc = hostMultiConnectionData.dataChannel![i];
+        dc.onopen = () => {
+          console.log(`DC ${i} open`);
+          hostMultiConnectionData.dataChannelReady[i] = true;
+          updateHostMultiConnectionStatePartially({
+            dataChannelReady: [...hostMultiConnectionData.dataChannelReady],
+          });
+        };
+        dc.onclose = () => {
+          console.log(`DC ${i} closed`);
+          hostMultiConnectionData.dataChannelReady[i] = false;
+          updateHostMultiConnectionStatePartially({
+            dataChannelReady: [...hostMultiConnectionData.dataChannelReady],
+          });
+        };
+
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
         hostMultiConnectionData = {
           ...hostMultiConnectionData,
           offers: [
@@ -109,7 +148,7 @@ export const useCreateMultiChannelHostConnection = () => {
           ],
           connectionState: [
             ...(hostMultiConnectionData.connectionState || []),
-            hostMultiConnectionData.peerConnection[i].connectionState,
+            pc.connectionState,
           ],
           dataChannelReady: [
             ...(hostMultiConnectionData.dataChannelReady || []),
@@ -117,21 +156,42 @@ export const useCreateMultiChannelHostConnection = () => {
           ],
         };
 
+        hostMultiConnectionData = {
+          ...hostMultiConnectionData,
+          roomId: roomId,
+          userId: userId,
+        };
+
         updateHostMultiConnectionStatePartially(hostMultiConnectionData);
       }
 
       const connection = await firestore.createMultiChannelRoomAsHost(
         roomId,
-        hostMultiConnectionData.offers!
+        hostMultiConnectionData.offers!,
       );
+
+      let unsubscribeFromAnswers: (() => void) | undefined;
+
       if (connection) {
-        firestore.listenForMultiChannelPeerAnswers(
+        isRoomCreated = true;
+        // Flush buffer
+        candidatesBuffer.forEach((candidateData) => {
+          firestore.sendMultiChannelIceCandidate(candidateData);
+        });
+
+        unsubscribeFromAnswers =
+          await firestore.listenForMultiChannelPeerAnswers(
+            roomId,
+            hostMultiConnectionData.peerConnection,
+            acceptMultiChannelIncomingConnectionRequestFromPeer,
+          );
+
+        firestore.listenForMultiChannelIceCandidates(
           roomId,
-
           hostMultiConnectionData.peerConnection,
-
-          acceptMultiChannelIncomingConnectionRequestFromPeer
+          "host",
         );
+
         toast.success("Host connection created successfully");
         return roomId;
       } else {
@@ -140,6 +200,8 @@ export const useCreateMultiChannelHostConnection = () => {
     } catch (error) {
       console.error("Error creating connections:", error);
       toast.error("Error creating connections");
+      // Cleanup on error
+      hostMultiConnectionData.peerConnection?.forEach((pc) => pc.close());
     }
   };
   return {

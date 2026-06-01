@@ -87,13 +87,13 @@ export class FirestoreSignaling {
         candidate: candidate.toJSON(),
         fromHost,
         timestamp: Date.now(),
-      })
+      }),
     );
   };
 
   public async createMultiChannelRoomAsHost(
     roomId: string,
-    offers: MultiChannelRoomOffer[]
+    offers: MultiChannelRoomOffer[],
   ) {
     const roomRef = doc(this.database, "multi-channel-rooms", roomId);
 
@@ -127,7 +127,7 @@ export class FirestoreSignaling {
     return (data?.offer as OfferMetadata) ?? null;
   }
   public async getMultiChannelHostOffer(
-    roomId: string
+    roomId: string,
   ): Promise<MultiChannelRoomOffer[] | null> {
     const roomRef = doc(this.database, "multi-channel-rooms", roomId);
     const roomSnap = await getDoc(roomRef);
@@ -145,7 +145,7 @@ export class FirestoreSignaling {
   public async setPeerAnswer(
     roomId: string,
     answer: OfferMetadata,
-    peerConnection: RTCPeerConnection
+    peerConnection: RTCPeerConnection,
   ) {
     const roomRef = doc(this.database, "rooms", roomId);
     await updateDoc(roomRef, { answer });
@@ -159,7 +159,7 @@ export class FirestoreSignaling {
   }
   public async setMultiChannelPeerAnswers(
     roomId: string,
-    answers: MultiChannelRoomAnswer[]
+    answers: MultiChannelRoomAnswer[],
   ) {
     const roomRef = doc(this.database, "multi-channel-rooms", roomId);
     await updateDoc(roomRef, { answers });
@@ -177,8 +177,8 @@ export class FirestoreSignaling {
     peerConnection: RTCPeerConnection | null,
     onAnswer: (
       incomingConnectionRequestHandshake: string,
-      peerConnection: RTCPeerConnection | null
-    ) => void
+      peerConnection: RTCPeerConnection | null,
+    ) => void,
   ) => {
     const roomRef = doc(this.database, "rooms", roomId);
 
@@ -204,7 +204,7 @@ export class FirestoreSignaling {
   listenForIceCandidates = async (
     roomId: string,
     peerConnection: RTCPeerConnection | null,
-    listenAs: string = "host"
+    listenAs: string = "host",
   ) => {
     const roomRef = doc(this.database, "rooms", roomId);
     const processedCandidates = new Set<string>();
@@ -221,7 +221,7 @@ export class FirestoreSignaling {
           .filter((candidate) =>
             listenAs === "host"
               ? candidate.fromHost === false
-              : candidate.fromHost
+              : candidate.fromHost,
           )
           .filter((candidateData) => {
             const key = `${candidateData.timestamp}-${candidateData.fromHost}`;
@@ -249,15 +249,15 @@ export class FirestoreSignaling {
     peerConnections: RTCPeerConnection[] | null,
     onAnswer: (
       incomingConnectionRequestHandshake: string[],
-      peerConnections: RTCPeerConnection[] | null
-    ) => void
+      peerConnections: RTCPeerConnection[] | null,
+    ) => void,
   ) => {
     const roomRef = doc(this.database, "multi-channel-rooms", roomId);
 
     const unsubscribe = onSnapshot(roomRef, (docSnap) => {
       const data = docSnap.data();
-      if (data?.answer) {
-        const answers = data.answer as MultiChannelRoomAnswer[];
+      if (data?.answers) {
+        const answers = data.answers as MultiChannelRoomAnswer[];
 
         const answerStrings = answers.map((answer) => JSON.stringify(answer));
         onAnswer(answerStrings, peerConnections);
@@ -269,7 +269,100 @@ export class FirestoreSignaling {
             });
           });
         }
+        this.listenForMultiChannelIceCandidates(
+          roomId,
+          peerConnections,
+          "host",
+        );
         unsubscribe();
+      }
+    });
+    return unsubscribe;
+  };
+
+  sendMultiChannelIceCandidate = async ({
+    roomId,
+    candidate,
+    fromHost,
+    pcIndex,
+  }: {
+    roomId: string;
+    candidate: RTCIceCandidate;
+    fromHost: boolean;
+    pcIndex: number;
+  }) => {
+    const roomRef = doc(this.database, "multi-channel-rooms", roomId);
+    await updateDoc(
+      roomRef,
+      "candidates",
+      arrayUnion({
+        candidate: candidate.toJSON(),
+        fromHost,
+        pcIndex,
+        timestamp: Date.now(),
+      }),
+    );
+  };
+
+  listenForMultiChannelIceCandidates = async (
+    roomId: string,
+    peerConnections: RTCPeerConnection[] | null,
+    listenAs: string = "host",
+  ) => {
+    const roomRef = doc(this.database, "multi-channel-rooms", roomId);
+    const processedCandidates = new Set<string>();
+
+    const unsubscribe = onSnapshot(roomRef, (docSnap) => {
+      const data = docSnap.data();
+      if (data?.candidates) {
+        const candidates = data.candidates as {
+          candidate: RTCIceCandidate;
+          fromHost: boolean;
+          timestamp: number;
+          pcIndex: number;
+        }[];
+        candidates
+          .filter((candidate) =>
+            listenAs === "host"
+              ? candidate.fromHost === false
+              : candidate.fromHost,
+          )
+          .filter((candidateData) => {
+            const key = `${candidateData.timestamp}-${candidateData.fromHost}-${candidateData.pcIndex}`;
+            if (processedCandidates.has(key)) {
+              return false; // Already processed
+            }
+            processedCandidates.add(key);
+            return true;
+          })
+
+          .forEach((candidateData) => {
+            // console.log("Received ICE candidate:", candidateData);
+            const candidate = candidateData.candidate;
+            const pcIndex = candidateData.pcIndex;
+            if (peerConnections && peerConnections[pcIndex] && candidate) {
+              try {
+                // Ensure candidate is a valid RTCIceCandidate
+                const rtcCandidate = new RTCIceCandidate(candidate);
+                console.log(
+                  `Adding ICE candidate to PC ${pcIndex}:`,
+                  rtcCandidate.candidate,
+                );
+                peerConnections[pcIndex].addIceCandidate(rtcCandidate);
+              } catch (e) {
+                console.error(
+                  `Error adding ICE candidate to PC ${pcIndex}:`,
+                  e,
+                );
+              }
+            } else {
+              console.warn(
+                `Skipping candidate for PC ${pcIndex} - PC exists: ${!!(
+                  peerConnections && peerConnections[pcIndex]
+                )}`,
+              );
+            }
+          });
       }
     });
     return unsubscribe;
