@@ -5,34 +5,64 @@ import { Message } from "@/app/store/messenger/types";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Paperclip } from "lucide-react";
+import { Download, File as FileIcon } from "lucide-react";
 
 export const ChatBubble = (message: Message) => {
   return (
-    <div className="m-2">
-      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-        <span className="text-sm font-semibold">{message.sender}</span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+    <div className="animate-slide-in-right max-w-[320px]">
+      <div className="flex items-baseline gap-1.5 mb-1 px-1">
+        <span className="text-xs font-semibold">{message.sender}</span>
+        <span className="text-[10px] text-muted-foreground">
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}
         </span>
       </div>
-      <div className="flex flex-col max-w-[320px] leading-1.5 p-4 rounded-e-xl rounded-es-xl dark:bg-card bg-gray-100">
-        <p className="text-sm font-normal py-2.5 ">{message.message}</p>
+      <div className="rounded-2xl rounded-tl-sm px-4 py-2.5 shadow-sm bg-muted/60 dark:bg-card">
+        <p className="text-sm leading-relaxed">{message.message}</p>
       </div>
     </div>
   );
 };
 
-export const selectAppropriateChatBubble = (message: Message) => {
+export const SentChatBubble = (message: Message) => {
+  return (
+    <div className="animate-slide-in-left max-w-[320px]">
+      <div className="flex items-baseline gap-1.5 mb-1 px-1 justify-end">
+        <span className="text-[10px] text-muted-foreground">
+          {new Date(message.timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </span>
+        <span className="text-xs font-semibold">You</span>
+      </div>
+      <div className="rounded-2xl rounded-tr-sm px-4 py-2.5 shadow-sm bg-primary text-primary-foreground">
+        <p className="text-sm leading-relaxed">{message.message}</p>
+      </div>
+    </div>
+  );
+};
+
+export const selectAppropriateChatBubble = (
+  message: Message,
+  isSender?: boolean,
+) => {
   switch (message.messageType) {
     case "message":
-      return <ChatBubble {...message} />;
+      return isSender ? (
+        <SentChatBubble {...message} />
+      ) : (
+        <ChatBubble {...message} />
+      );
     case "file":
     case "metadata":
-      return <FileBubble {...message} />;
+      return isSender ? (
+        <SentFileBubble {...message} />
+      ) : (
+        <FileBubble {...message} />
+      );
     default:
       return <ChatBubble {...message} />;
   }
@@ -45,7 +75,13 @@ export const getFilePreviewComponent = (file: FileTransferMetadata) => {
 
   if (mime.startsWith("image/")) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={file.fileName} className="max-w-full rounded" />;
+    return (
+      <img
+        src={url}
+        alt={file.fileName}
+        className="max-w-full rounded-xl object-cover"
+      />
+    );
   }
 
   if (mime.startsWith("video/")) {
@@ -53,8 +89,7 @@ export const getFilePreviewComponent = (file: FileTransferMetadata) => {
       <video
         src={url}
         controls
-        className="max-w-full rounded h-full max-h-[300px] md:max-h-[600px]"
-        // style={{ maxHeight: "300px" }}
+        className="max-w-full rounded-xl h-full max-h-[300px] md:max-h-[600px]"
       />
     );
   }
@@ -72,101 +107,118 @@ export const getFilePreviewComponent = (file: FileTransferMetadata) => {
       <iframe
         src={url}
         title={file.fileName}
-        className="w-full h-64 border rounded"
+        className="w-full h-64 border rounded-xl"
       />
     );
   }
 
-  // Default: generic file with download link
+  // Default: generic file icon
   return (
-    <a
-      href={url}
-      download={file.fileName}
-      target="_blank"
-      className="flex items-center gap-2 px-4 py-2 rounded"
-    >
-      <span>
-        <Paperclip className="h-5 w-5" />
-      </span>{" "}
-      <span className="text-sm font-medium truncate break-all text-ellipsis">
+    <div className="flex items-center gap-3 px-3 py-2 rounded-xl border">
+      <FileIcon className="h-8 w-8 text-muted-foreground shrink-0" />
+      <span className="text-sm font-medium truncate break-all">
         {file.fileName}
       </span>
-    </a>
+    </div>
   );
 };
 
-export const FileBubble = (message: Message) => {
+const FileBubbleBase = ({
+  message,
+  sent,
+}: {
+  message: Message;
+  sent: boolean;
+}) => {
   const { currentFileManagerState } = useFileManagerState();
+  const isTransferring = currentFileManagerState[message.id]?.isTransferring;
+  const progress = currentFileManagerState[message.id]?.transferProgress ?? 0;
+
   return (
-    <div className="m-2">
-      <div className="flex items-center space-x-2 rtl:space-x-reverse">
-        <span className="text-sm font-semibold">{message.sender}</span>
-        <span className="text-sm text-gray-500 dark:text-gray-400">
+    <div
+      className={`${sent ? "animate-slide-in-left" : "animate-slide-in-right"} max-w-[320px] w-full`}
+    >
+      <div
+        className={`flex items-baseline gap-1.5 mb-1 px-1 ${sent ? "justify-end" : ""}`}
+      >
+        {!sent && (
+          <span className="text-xs font-semibold">{message.sender}</span>
+        )}
+        <span className="text-[10px] text-muted-foreground">
           {new Date(message.timestamp).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",
           })}
         </span>
+        {sent && <span className="text-xs font-semibold">You</span>}
       </div>
-      <div className="flex flex-col w-full max-w-[320px] leading-1.5 p-4 rounded-e-xl rounded-es-xl dark:bg-card bg-gray-100">
-        <p className="text-sm font-normal py-2.5 ">{message.message}</p>
-        {!message.url ? (
-          <Skeleton className="h-[200px] md:h-[300px] rounded-xl w-full my-2" />
-        ) : (
-          <div className="py-1 my-2">{getFilePreviewComponent(message)}</div>
+      <div
+        className={`rounded-2xl ${sent ? "rounded-tr-sm" : "rounded-tl-sm"} px-4 py-3 shadow-sm ${
+          sent
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted/60 dark:bg-card"
+        } w-full`}
+      >
+        {/* Caption */}
+        {message.message && (
+          <p className="text-sm leading-relaxed mb-2">{message.message}</p>
         )}
 
-        <p className="text-xs font-medium mb-2 truncate break-all">
+        {/* File preview or skeleton */}
+        {!message.url && isTransferring ? (
+          <Skeleton className="h-[160px] rounded-xl w-full my-1" />
+        ) : (
+          message.url && (
+            <div className="py-1 rounded-xl overflow-hidden">
+              {getFilePreviewComponent(message)}
+            </div>
+          )
+        )}
+
+        {/* File name */}
+        <p className="text-xs font-medium mt-2 truncate break-all opacity-80">
           {message.fileName}
         </p>
-        <div className="flex items-center justify-between gap-2">
-          <span className="flex text-xs font-normal text-gray-500 dark:text-gray-400 gap-2">
+
+        {/* Size + type + download */}
+        <div className="flex items-center justify-between gap-2 mt-1">
+          <span className="text-[10px] opacity-60 flex items-center gap-1">
             {returnFileSize(message.size ?? 0)}
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-              className="self-center"
-              width="3"
-              height="4"
-              viewBox="0 0 3 4"
-              fill="none"
-            >
-              <circle cx="1.5" cy="2" r="1.5" fill="#6B7280" />
-            </svg>
-            {message.fileType}
+            {message.fileType && (
+              <>
+                <span>·</span>
+                <span>{message.fileType}</span>
+              </>
+            )}
           </span>
           {message.url && (
-            <div className="inline-flex self-center items-center">
-              <Button
-                variant={"outline"}
-                asChild
-                aria-label={`Download ${message.fileName}`}
-                className="inline-flex self-center items-center p-2 text-sm font-medium text-center rounded-lg focus:ring-4 focus:outline-none focus:ring-gray-50 dark:focus:ring-gray-600"
-              >
-                <a download={message.fileName} href={message.url ?? ""}>
-                  <svg
-                    className="w-4 h-4 text-gray-900 dark:text-white"
-                    aria-hidden="true"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z" />
-                    <path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z" />
-                  </svg>
-                </a>
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="h-7 w-7 p-0 rounded-full"
+              aria-label={`Download ${message.fileName}`}
+            >
+              <a download={message.fileName} href={message.url ?? ""}>
+                <Download className="h-3.5 w-3.5" />
+              </a>
+            </Button>
           )}
         </div>
-        {currentFileManagerState[message.id] &&
-          currentFileManagerState[message.id].transferProgress !== 100 && (
-            <Progress
-              className="my-2 "
-              value={currentFileManagerState[message.id].transferProgress}
-            />
-          )}
+
+        {/* Transfer progress */}
+        {isTransferring && progress < 100 && (
+          <Progress className="mt-2 h-1" value={progress} />
+        )}
       </div>
     </div>
   );
 };
+
+export const FileBubble = (message: Message) => (
+  <FileBubbleBase message={message} sent={false} />
+);
+
+export const SentFileBubble = (message: Message) => (
+  <FileBubbleBase message={message} sent={true} />
+);

@@ -1,7 +1,14 @@
 import { metaData } from "@/app/_data/constants";
 import { ThemeProvider } from "@/components/theme-provider";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: metaData.title,
@@ -45,6 +52,7 @@ export const metadata: Metadata = {
     },
   },
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -52,7 +60,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={`${inter.variable} font-sans`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
