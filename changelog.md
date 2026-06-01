@@ -1,3 +1,37 @@
+## [v0.1.0-beta.6] - 01-06-2026
+
+### 🐞 Bug Fixes
+
+- **Fast Send Text Messaging**
+  - Text messages can now be sent and received in Fast Send mode.
+  - Hitting Enter or the send button dispatches the message through the first active multichannel pipe via the existing `useSendMessage` hook.
+
+- **Create / Join / QR Buttons Hidden on Fast Send Route**
+  - The header and mobile sidebar footer no longer show Standard-mode connection buttons (`Create`, `Join`, `QR`) when the user is on `/fast`.
+  - Prevents confusion since Fast Send has its own connection flow.
+
+- **Sender Bubble: "Sending…" Indicator**
+  - The sender's file bubble now shows a pulsing _Sending…_ text while chunks are being dispatched, then reveals the file preview when complete.
+  - Previous progress bar was invisible because `SafeDataChannelSender` flushes synchronously on the JS main thread — React never gets a render slot mid-flush. Correct architectural fix is deferred; the pulsing indicator is honest UX for now.
+
+- **Receiver OOM Crash on Large Files (Fast Send)**
+  - `FileChunkManager` was storing the full `number[]` chunk payload in JavaScript heap memory as well as writing it to IndexedDB (WTF was I thinking!). With 4 parallel channels on iOS Safari (Limited process memory), a large file's worth of arrays caused an out-of-memory crash.
+  - Fixed by storing an empty placeholder (`[]`) in `FileChunkManager` for file-type chunks. The singleton was only used as a chunk-count tracker; actual file data lives exclusively in IndexedDB. Standard mode is unaffected.
+
+- **Assembly Race Condition on Fast Send (Missing Chunk)**
+  - With 4 channels writing chunks to IndexedDB concurrently, the channel that delivered the final chunk could trigger file assembly before the other 3 channels had finished their own `saveChunk` awaits.
+  - Fixed by registering every `saveChunk` promise in a per-file `inFlightSaves` map (keyed before the await). When `receivedCount === totalChunks`, the handler now does `await Promise.all(inFlightSaves.get(id))` — guaranteeing every chunk is persisted before `createDownloadStream` reads them back.
+
+- **iOS PWA Keep-Alive Rewrite**
+  - The original `useSilentAudioKeepAlive` created an `AudioContext` at call time, which iOS Safari rejected when triggered by background network events (no user gesture in scope).
+  - Reworked to a single global `AudioContext` unlocked on the first `touchstart` or `click` event anywhere in the document. Subsequent keep-alive calls simply unmute the already-running oscillator (gain `0.001`) — no gesture required. Screen now stays on throughout Fast Send transfers on iPhone PWA.
+
+- **Fast Send Chat Scroll Lock**
+  - Added CSS flex constraints (`flex-1 min-h-0`) to the main layout and Radix `ScrollArea` on the `/fast` route so the message container respects viewport bounds and scrolls gracefully when receiving large numbers of files.
+  - Connection status header now spans full width to match standard mode layout.
+
+---
+
 ## [v0.1.0-beta.5] - 01-06-2026
 
 ### 🚀 Features
@@ -81,6 +115,7 @@
 
 - Fast Send uses internet-only signaling (Room ID via Firestore); QR-based peer discovery is for Standard mode only.
 - Hotspot-based connections may work but are not guaranteed depending on device NAT configuration.
+- Sender-side transfer progress bar is not shown in Fast Send — `SafeDataChannelSender` flushes synchronously, blocking React renders. Planned for a future release via a `MessageChannel`-based progress bridge.
 
 ---
 

@@ -13,6 +13,15 @@ let notificationRequested = false;
 // Tracks transfers that have failed so we can suppress further toasts for them
 const failedTransfers = new Set<string>();
 
+// Per-transfer last progress update timestamp (for throttling)
+const lastProgressUpdateTime = new Map<string, number>();
+
+// Per-transfer registry of in-flight IndexedDB save promises.
+// Ensures all chunks are fully persisted before assembly starts.
+// (Race: 4 channels can be mid-save concurrently; the one that hits
+// count===total must wait for the others' saves to resolve.)
+const inFlightSaves = new Map<string, Promise<void>[]>();
+
 export const useHandleDataChannelMessages = () => {
   const { addNewMessage, updateMessageById } = useMessengerState();
   const fileChunksManager = FileChunksManager.getInstance();
@@ -97,8 +106,14 @@ export const useHandleDataChannelMessages = () => {
           throw new Error("Transfer data not found!");
         }
 
+        // Register this save BEFORE awaiting so other channels' completion
+        // checks can see it in inFlightSaves even while it's still pending.
+        if (!inFlightSaves.has(data.id)) inFlightSaves.set(data.id, []);
+        const savePromise = fileStreamManager.saveChunk(data);
+        inFlightSaves.get(data.id)!.push(savePromise);
+
         // IMPORTANT: await the save so the chunk is in IndexedDB before we check completion
-        await fileStreamManager.saveChunk(data);
+        await savePromise;
 
         // Ensure fileChunksManager has an entry for this file
         // With multichannel, file chunks can race ahead of the metadata entry
@@ -119,15 +134,26 @@ export const useHandleDataChannelMessages = () => {
 
         const progress = (receivedCount / data.totalChunks!) * 100;
 
-        updateFileManagerStatePartially({
-          [data.id]: {
-            transferProgress: progress,
-            isTransferring: true,
-          },
-        });
+        // Throttle UI updates — at most every 200ms per file, always on completion
+        const now = Date.now();
+        const lastUpdate = lastProgressUpdateTime.get(data.id) ?? 0;
+        if (now - lastUpdate >= 200 || receivedCount === data.totalChunks!) {
+          lastProgressUpdateTime.set(data.id, now);
+          updateFileManagerStatePartially({
+            [data.id]: {
+              transferProgress: progress,
+              isTransferring: true,
+            },
+          });
+        }
 
-        // Only assemble when ALL chunks have been received and saved
+        // Only assemble when ALL chunks have been received
         if (receivedCount === data.totalChunks!) {
+          // Wait for every in-flight save to finish — including any still-pending
+          // saves on the other 3 channels that haven't resolved yet.
+          await Promise.all(inFlightSaves.get(data.id) ?? []);
+          inFlightSaves.delete(data.id);
+
           const downloadUrl = await fileStreamManager.getDownloadUrl(data.id);
           if (downloadUrl) {
             updateMessageById(data.id, {
@@ -146,6 +172,7 @@ export const useHandleDataChannelMessages = () => {
             body: data.fileName,
           });
           fileChunksManager.removeFile(data.id);
+          lastProgressUpdateTime.delete(data.id);
 
           // Stop keep-alive once all transfers are done
           if (fileChunksManager.getAllFiles().size === 0) {

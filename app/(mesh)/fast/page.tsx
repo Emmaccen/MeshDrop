@@ -1,5 +1,5 @@
 "use client";
-import { AlertCircle, Paperclip, Wifi, WifiOff } from "lucide-react";
+import { AlertCircle, Paperclip, Send, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
@@ -24,6 +24,7 @@ import { useCreateMultiChannelHostConnection } from "@/hooks/fast-send/useCreate
 import { useMultiChannelConnect } from "@/hooks/fast-send/useMultiChannelConnect";
 import { useMultiChannelTransferFile } from "@/hooks/fast-send/useMultiChannelTransferFile";
 import { useHandleDataChannelMessages } from "@/hooks/useHandleDataChannelMessages";
+import { useSendMessage } from "@/hooks/useSendMessage";
 import { useSilentAudioKeepAlive } from "@/hooks/useSilentAudioKeepAlive";
 
 import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
@@ -51,6 +52,7 @@ const FastSend = () => {
   const { startMultiChannelTransfer } = useMultiChannelTransferFile();
   const { handleDataChannelMessage, handleChannelClose } =
     useHandleDataChannelMessages();
+  const { sendMessage } = useSendMessage();
   const { start: startKeepAlive, stop: stopKeepAlive } =
     useSilentAudioKeepAlive();
   const firestore = FirestoreSignaling.getInstance();
@@ -168,10 +170,10 @@ const FastSend = () => {
       });
       return;
     }
-    const channels = hostMulti.dataChannel || peerMulti.dataChannel;
 
-    if (!channels) {
-      toast.error("No connection available");
+    const channels = hostMulti.dataChannel || peerMulti.dataChannel;
+    if (!channels || channels.length === 0) {
+      toast.error("No active channels available.");
       return;
     }
 
@@ -194,6 +196,29 @@ const FastSend = () => {
     setMessage("");
     hideModal(ModalIds.fileMessageCaptionModal);
     setSelectedFile(null);
+  };
+
+  const sendText = () => {
+    if (!message.trim() || hasDisconnectedChannel) return;
+
+    const channels = hostMulti.dataChannel || peerMulti.dataChannel;
+    if (!channels || channels.length === 0) return;
+
+    const sender = savedUsername || (isHostConnected ? "host" : "peer");
+    const senderId = hostMulti.userId || peerMulti.userId || "unknown";
+
+    sendMessage(
+      {
+        id: crypto.randomUUID(),
+        message: message.trim(),
+        timestamp: new Date().toISOString(),
+        sender,
+        senderId,
+        messageType: "message",
+      },
+      channels[0],
+    );
+    setMessage("");
   };
 
   const chatBubble = useMemo(
@@ -338,7 +363,7 @@ const FastSend = () => {
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-[800px] mx-auto relative overflow-hidden">
+    <div className="flex flex-col flex-1 h-full w-full relative overflow-hidden min-h-0">
       {/* Connection status indicator */}
       <div className="flex items-center justify-between px-4 py-1.5 border-b bg-background/95">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -374,7 +399,7 @@ const FastSend = () => {
         </div>
       )}
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 min-h-0 p-4 max-w-[800px] mx-auto w-full">
         <div className="flex flex-col gap-4 pb-4">
           {currentMessengerState.messages.map((msg) => (
             <div
@@ -396,9 +421,9 @@ const FastSend = () => {
         </div>
       </ScrollArea>
 
-      <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full border-t">
         <form
-          className="relative flex items-center gap-2"
+          className="relative flex items-center gap-2 max-w-[800px] mx-auto w-full"
           onSubmit={(e) => e.preventDefault()}
         >
           <label
@@ -431,15 +456,32 @@ const FastSend = () => {
               hasDisconnectedChannel ? "Connection lost…" : "Caption…"
             }
             disabled={!!hasDisconnectedChannel}
-            className="flex-1 bg-muted/30 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1 bg-muted/30 rounded-2xl pl-4 pr-12 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none disabled:cursor-not-allowed disabled:opacity-50"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
+                sendText();
               }
             }}
           />
+          <div className="absolute right-3 flex items-center">
+            <button
+              title="Send Message"
+              type="button"
+              aria-label="Send Message"
+              disabled={!!hasDisconnectedChannel || !message.trim()}
+              onClick={sendText}
+              className={`p-2 rounded-full transition-colors ${
+                message.trim() && !hasDisconnectedChannel
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+                  : "bg-muted/50 text-muted-foreground opacity-50 cursor-not-allowed"
+              }`}
+            >
+              <Send className="h-4 w-4 ml-0.5" />
+            </button>
+          </div>
         </form>
       </div>
 

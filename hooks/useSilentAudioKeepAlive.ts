@@ -1,5 +1,3 @@
-import { useCallback, useEffect, useRef } from "react";
-
 /**
  * Silent Audio Keep-Alive Hook
  *
@@ -10,66 +8,102 @@ import { useCallback, useEffect, useRef } from "react";
  * The Web Audio API keeps the tab "active" because the browser
  * thinks it's producing audio output.
  */
+import { useCallback, useEffect, useRef } from "react";
+
+// Global state for the Web Audio API workaround
+let globalAudioCtx: AudioContext | null = null;
+let globalGainNode: GainNode | null = null;
+let globalOscillator: OscillatorNode | null = null;
+let isUnlocked = false;
+
+const unlockAudio = () => {
+  if (isUnlocked || typeof window === "undefined") return;
+
+  try {
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+
+    if (!AudioCtx) return;
+
+    if (!globalAudioCtx) {
+      globalAudioCtx = new AudioCtx();
+    }
+
+    if (globalAudioCtx.state === "suspended") {
+      globalAudioCtx.resume();
+    }
+
+    if (!globalOscillator) {
+      globalOscillator = globalAudioCtx.createOscillator();
+      globalGainNode = globalAudioCtx.createGain();
+
+      // Start muted
+      globalGainNode.gain.value = 0;
+      globalOscillator.connect(globalGainNode);
+      globalGainNode.connect(globalAudioCtx.destination);
+
+      globalOscillator.frequency.value = 1;
+      globalOscillator.type = "sine";
+      globalOscillator.start();
+    }
+
+    isUnlocked = true;
+    console.log("[KeepAlive] AudioContext globally unlocked");
+
+    // Remove event listeners once unlocked
+    document.removeEventListener("touchstart", unlockAudio);
+    document.removeEventListener("click", unlockAudio);
+  } catch (err) {
+    console.warn("[KeepAlive] Failed to unlock audio", err);
+  }
+};
+
+// Bind early to catch the very first user interaction
+if (typeof document !== "undefined") {
+  document.addEventListener("touchstart", unlockAudio, { once: true });
+  document.addEventListener("click", unlockAudio, { once: true });
+}
+
+/**
+ * Silent Audio Keep-Alive Hook
+ *
+ * Plays a near-silent audio oscillator to prevent browsers from
+ * throttling/suspending the tab when the screen goes off.
+ *
+ * It uses a globally unlocked AudioContext so it can be activated
+ * (unmuted) even when triggered by an incoming network message
+ * (without a direct user gesture at that exact moment).
+ */
 export function useSilentAudioKeepAlive() {
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
   const isActiveRef = useRef(false);
 
   const start = useCallback(() => {
     if (isActiveRef.current) return;
 
-    try {
-      const AudioCtx =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+    // Fallback if not unlocked yet
+    if (!isUnlocked) {
+      unlockAudio();
+    }
 
-      if (!AudioCtx) return;
-
-      const ctx = new AudioCtx();
-      audioContextRef.current = ctx;
-
-      // Create a silent oscillator (gain = nearly 0)
-      const oscillator = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      // Set gain to a near-inaudible level
-      // Some browsers ignore truly zero gain, so use a tiny value
-      gainNode.gain.value = 0.001;
-
-      oscillator.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      // Use a very low frequency that won't be noticeable even at low gain
-      oscillator.frequency.value = 1;
-      oscillator.type = "sine";
-
-      oscillator.start();
-      oscillatorRef.current = oscillator;
+    if (globalGainNode && globalAudioCtx) {
+      // Set to near-inaudible (0.001) instead of 0
+      globalGainNode.gain.setTargetAtTime(0.001, globalAudioCtx.currentTime, 0.01);
       isActiveRef.current = true;
-
-      console.log("[KeepAlive] Silent audio started");
-    } catch (err) {
-      console.warn("[KeepAlive] Failed to start silent audio:", err);
+      console.log("[KeepAlive] Silent audio unmuted (started)");
     }
   }, []);
 
   const stop = useCallback(() => {
     if (!isActiveRef.current) return;
 
-    try {
-      oscillatorRef.current?.stop();
-      oscillatorRef.current?.disconnect();
-      audioContextRef.current?.close();
-    } catch {
-      // Ignore cleanup errors
+    if (globalGainNode && globalAudioCtx) {
+      // Mute again
+      globalGainNode.gain.setTargetAtTime(0, globalAudioCtx.currentTime, 0.01);
+      isActiveRef.current = false;
+      console.log("[KeepAlive] Silent audio muted (stopped)");
     }
-
-    oscillatorRef.current = null;
-    audioContextRef.current = null;
-    isActiveRef.current = false;
-
-    console.log("[KeepAlive] Silent audio stopped");
   }, []);
 
   // Cleanup on unmount

@@ -75,16 +75,22 @@ export const useMultiChannelTransferFile = () => {
 
     // Create SafeDataChannelSenders for each channel to handle backpressure
     let totalSent = 0;
+    let lastProgressUpdate = 0;
     const senders = dataChannels.map(
       (dc) =>
         new SafeDataChannelSender(dc, undefined, (_raw) => {
           totalSent++;
-          updateFileManagerStatePartially({
-            [fileId]: {
-              transferProgress: (totalSent / totalChunks) * 100,
-              isTransferring: totalSent < totalChunks,
-            },
-          });
+          const now = Date.now();
+          // Update UI at most every 200ms, always on the final chunk
+          if (now - lastProgressUpdate >= 200 || totalSent === totalChunks) {
+            lastProgressUpdate = now;
+            updateFileManagerStatePartially({
+              [fileId]: {
+                transferProgress: (totalSent / totalChunks) * 100,
+                isTransferring: totalSent < totalChunks,
+              },
+            });
+          }
         }),
     );
 

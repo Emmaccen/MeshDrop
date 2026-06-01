@@ -164,14 +164,29 @@ const FileBubbleBase = ({
           <p className="text-sm leading-relaxed mb-2">{message.message}</p>
         )}
 
-        {/* File preview or skeleton */}
-        {!message.url && isTransferring ? (
-          <Skeleton className="h-[160px] rounded-xl w-full my-1" />
+        {/* File preview, skeleton, or sender loading state */}
+        {sent ? (
+          // Sender: has a local URL immediately but can't know receiver progress.
+          // Show a pulsing indicator while chunks are being dispatched.
+          isTransferring ? (
+            <p className="text-xs animate-pulse opacity-60 mt-1 mb-1">Sending…</p>
+          ) : (
+            message.url && (
+              <div className="py-1 rounded-xl overflow-hidden">
+                {getFilePreviewComponent(message)}
+              </div>
+            )
+          )
         ) : (
-          message.url && (
-            <div className="py-1 rounded-xl overflow-hidden">
-              {getFilePreviewComponent(message)}
-            </div>
+          // Receiver: show skeleton while assembling, then preview when ready.
+          !message.url && isTransferring ? (
+            <Skeleton className="h-[160px] rounded-xl w-full my-1" />
+          ) : (
+            message.url && (
+              <div className="py-1 rounded-xl overflow-hidden">
+                {getFilePreviewComponent(message)}
+              </div>
+            )
           )
         )}
 
@@ -206,8 +221,8 @@ const FileBubbleBase = ({
           )}
         </div>
 
-        {/* Transfer progress */}
-        {isTransferring && progress < 100 && (
+        {/* Receiver progress bar */}
+        {!sent && isTransferring && progress < 100 && (
           <Progress className="mt-2 h-1" value={progress} />
         )}
       </div>
