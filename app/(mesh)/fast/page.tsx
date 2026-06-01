@@ -28,7 +28,6 @@ import { useSilentAudioKeepAlive } from "@/hooks/useSilentAudioKeepAlive";
 
 import { FirestoreSignaling } from "@/lib/FirestoreSignaling";
 
-import { useFileManagerState } from "@/app/store/fileManager";
 import { useHostMultiConnectionState } from "@/app/store/host";
 import { useMessengerState } from "@/app/store/messenger";
 import { useVisibilityState } from "@/app/store/modals";
@@ -45,8 +44,6 @@ const FastSend = () => {
     usePeerMultiConnectionState();
   const { currentMessengerState } = useMessengerState();
   const { showModal, imVisible, hideModal } = useVisibilityState();
-  const { updateFileManagerStatePartially, currentFileManagerState } =
-    useFileManagerState();
 
   // Logic hooks
   const { createMultiChannelHost } = useCreateMultiChannelHostConnection();
