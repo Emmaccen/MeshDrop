@@ -5,13 +5,13 @@ export class SafeDataChannelSender {
   private sending = false;
   private channel: RTCDataChannel;
   private onMessageSent?: (raw: string) => void;
-  public isFlushingOverflow = false; // adding this to prevent memory choking errors
+  public isFlushingOverflow = false;
   private MAX_QUEUE = MAX_QUEUE_LENGTH;
 
   constructor(
     dataChannel: RTCDataChannel,
     lowThreshold = BUFFER_THRESHOLD,
-    onMessageSent?: (raw: string) => void
+    onMessageSent?: (raw: string) => void,
   ) {
     this.channel = dataChannel;
     this.channel.bufferedAmountLowThreshold = lowThreshold;
@@ -40,7 +40,7 @@ export class SafeDataChannelSender {
       if (
         this.channel.bufferedAmount >= this.channel.bufferedAmountLowThreshold
       ) {
-        // Buffer is full, wait for it to drain
+        // Buffer is full — wait for onbufferedamountlow to re-trigger
         setTimeout(() => {
           this.sending = false;
           this.tryFlush();

@@ -14,7 +14,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const USERNAME_KEY = "meshdrop_username";
 
 export const JoinConnectionUserNameModal = () => {
   const { updatePeerStatePartially, currentPeerState } = usePeerState();
@@ -24,6 +26,48 @@ export const JoinConnectionUserNameModal = () => {
     useVisibilityState();
   const { currentMiscState } = useMiscState();
 
+  // Pre-fill from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(USERNAME_KEY);
+    if (saved) setUserName(saved);
+  }, []);
+
+  // Auto-proceed when modal opens if username already saved
+  useEffect(() => {
+    if (!imVisible(ModalIds.joinConnectionUserNameModal)) return;
+    const saved = localStorage.getItem(USERNAME_KEY);
+    if (!saved) return;
+
+    updatePeerStatePartially({
+      username: saved,
+      userId: crypto.randomUUID(),
+    });
+    hidePreviousThenShowNext(
+      ModalIds.joinConnectionUserNameModal,
+      currentMiscState.discoveryMode === "offline"
+        ? ModalIds.qrScannerModal
+        : ModalIds.joinOrShareWithRoomIdAutoDiscoveryModal,
+    );
+    resetHostState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imVisible(ModalIds.joinConnectionUserNameModal)]);
+
+  const handleSave = () => {
+    if (!username.trim()) return;
+    localStorage.setItem(USERNAME_KEY, username.trim());
+    updatePeerStatePartially({
+      username: username.trim(),
+      userId: crypto.randomUUID(),
+    });
+    hidePreviousThenShowNext(
+      ModalIds.joinConnectionUserNameModal,
+      currentMiscState.discoveryMode === "offline"
+        ? ModalIds.qrScannerModal
+        : ModalIds.joinOrShareWithRoomIdAutoDiscoveryModal,
+    );
+    resetHostState();
+  };
+
   return (
     <Dialog
       open={imVisible(ModalIds.joinConnectionUserNameModal)}
@@ -31,37 +75,25 @@ export const JoinConnectionUserNameModal = () => {
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Username</DialogTitle>
+          <DialogTitle>What should we call you?</DialogTitle>
           <DialogDescription className="text-left">
-            This is only used to identify your connection on other devices
+            This name is shown to the other device so they know who is
+            connecting. It&apos;s only stored on this device.
           </DialogDescription>
         </DialogHeader>
         <Input
           value={username}
           onChange={(e) => setUserName(e.target.value)}
+          onKeyUp={(e) => e.key === "Enter" && handleSave()}
           className="my-3"
           id="username"
           type="text"
+          placeholder="e.g. My Laptop, John's Phone…"
+          autoFocus
         />
         <DialogFooter>
-          <Button
-            onClick={() => {
-              if (!username.trim()) return;
-              updatePeerStatePartially({
-                username: username,
-                userId: crypto.randomUUID(),
-              });
-              hidePreviousThenShowNext(
-                ModalIds.joinConnectionUserNameModal,
-                currentMiscState.discoveryMode === "offline"
-                  ? ModalIds.qrScannerModal
-                  : ModalIds.joinOrShareWithRoomIdAutoDiscoveryModal
-              );
-              resetHostState();
-            }}
-            className="cursor-pointer"
-          >
-            Save Username
+          <Button onClick={handleSave} className="cursor-pointer">
+            Continue
           </Button>
         </DialogFooter>
       </DialogContent>

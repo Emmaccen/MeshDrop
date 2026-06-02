@@ -32,7 +32,7 @@ export const useConnectionStateManager = <
   const { updateStore: updateHostAndPeerCommonPropertiesPartially, values } =
     useUpdateStore<T>(atomStore);
 
-  const { handleDataChannelMessage } = useHandleDataChannelMessages();
+  const { handleDataChannelMessage, handleChannelClose } = useHandleDataChannelMessages();
 
   const handlePeerConnectionStateChange = (ev: Event) => {
     const { connectionState } = ev.currentTarget as RTCPeerConnection;
@@ -59,6 +59,8 @@ export const useConnectionStateManager = <
     updateHostAndPeerCommonPropertiesPartially({
       dataChannelReady: false,
     } as Partial<T>);
+    // Clean up in-flight transfers and stop keep-alive
+    handleChannelClose();
   };
 
   useEffect(() => {

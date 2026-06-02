@@ -17,9 +17,21 @@ export const useCreateHostConnection = () => {
       iceServers: [...stunServers],
     });
 
+    const roomId =
+      currentMiscState.discoveryMode === "online"
+        ? generateReadableRoomId()
+        : null;
+
     newPeerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         // new candidate arrived
+        if (roomId) {
+          firestore.sendIceCandidate({
+            roomId,
+            candidate: event.candidate,
+            fromHost: true,
+          });
+        }
       } else {
         // candidate gathering completed
       }
@@ -34,10 +46,7 @@ export const useCreateHostConnection = () => {
     try {
       const offer = await newPeerConnection.createOffer();
       await newPeerConnection.setLocalDescription(offer);
-      const roomId =
-        currentMiscState.discoveryMode === "online"
-          ? generateReadableRoomId()
-          : null;
+
       const offerWithMetadata: OfferMetadata = {
         type: offer.type,
         sdp: offer.sdp,

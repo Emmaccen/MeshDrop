@@ -20,6 +20,8 @@ export const useConnect = () => {
       iceServers: [...stunServers],
     });
 
+    const offerData: OfferMetadata = JSON.parse(hostOffer);
+
     // Set up data channel handler
     newPeerConnection.ondatachannel = (event) => {
       const newDataChannel = event.channel;
@@ -30,7 +32,6 @@ export const useConnect = () => {
 
     try {
       // Process the host's offer
-      const offerData: OfferMetadata = JSON.parse(hostOffer);
       if (!offerData.type || !offerData.sdp) {
         toast.error("Invalid connection offer");
         throw new Error("Invalid SDP format");
@@ -51,25 +52,38 @@ export const useConnect = () => {
       newPeerConnection.onicecandidate = (event) => {
         if (event.candidate) {
           // new candidate arrived
+          if (event.candidate) {
+            if (offerData.roomId) {
+              firestore.sendIceCandidate({
+                roomId: offerData.roomId,
+                candidate: event.candidate,
+                fromHost: false,
+              });
+            }
+          }
         } else {
           // candidate gathering completed
-          const userId = crypto.randomUUID();
-          const answer = newPeerConnection.localDescription;
-          const offerWithMetadata: OfferMetadata = {
-            type: answer?.type,
-            sdp: answer?.sdp,
-            userId: userId,
-            username: currentPeerState.username,
-            roomId: offerData.roomId,
-          };
-          updatePeerStatePartially({
-            peerAnswer: JSON.stringify(offerWithMetadata),
-            peerConnection: newPeerConnection,
-            connectedUsers: [offerData.username ?? "Host"],
-          });
-          if (offerData.roomId)
-            firestore.setPeerAnswer(offerData.roomId, offerWithMetadata);
         }
+        const userId = crypto.randomUUID();
+        const answer = newPeerConnection.localDescription;
+        const offerWithMetadata: OfferMetadata = {
+          type: answer?.type,
+          sdp: answer?.sdp,
+          userId: userId,
+          username: currentPeerState.username,
+          roomId: offerData.roomId,
+        };
+        updatePeerStatePartially({
+          peerAnswer: JSON.stringify(offerWithMetadata),
+          peerConnection: newPeerConnection,
+          connectedUsers: [offerData.username ?? "Host"],
+        });
+        if (offerData.roomId)
+          firestore.setPeerAnswer(
+            offerData.roomId,
+            offerWithMetadata,
+            newPeerConnection
+          );
       };
       // toast.success("Host connection processed successfully");
     } catch (error) {

@@ -44,7 +44,9 @@ class FileChunksManager {
         message.chunkIndex !== undefined &&
         message.totalChunks !== undefined
       )
-        fileData.chunks[message.chunkIndex] = message.chunkData;
+        // CRITICAL FIX: Do not store message.chunkData in RAM for files, it causes OOM crashes on large transfers!
+        // We only need the key to exist to track the chunk count.
+        fileData.chunks[message.chunkIndex] = [];
       fileData.message = message;
       return;
     }

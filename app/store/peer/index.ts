@@ -1,6 +1,9 @@
 import { useAtom } from "jotai";
 
-import { PeerStateType } from "@/app/store/peer/types";
+import {
+  PeerMultiConnectionStateType,
+  PeerStateType,
+} from "@/app/store/peer/types";
 import { useUpdateStore } from "@/app/store/utils/useUpdateStore";
 import { atomWithReset, useResetAtom } from "jotai/utils";
 
@@ -26,5 +29,29 @@ export const usePeerState = () => {
     currentPeerState,
     updatePeerStatePartially,
     resetPeerState,
+  };
+};
+export const peerMultiConnectionState =
+  atomWithReset<PeerMultiConnectionStateType>({
+    peerConnection: null,
+    dataChannel: null,
+    peerAnswers: null,
+    connectionState: [],
+    dataChannelReady: [],
+    userId: null,
+    roomId: null,
+    // index: null,
+  });
+
+export const usePeerMultiConnectionState = () => {
+  const [currentMultiConnectionPeerState] = useAtom(peerMultiConnectionState);
+  const resetPeerMultiConnectionState = useResetAtom(peerMultiConnectionState);
+
+  const { updateStore: updatePeerMultiConnectionStatePartially } =
+    useUpdateStore<PeerMultiConnectionStateType>(peerMultiConnectionState);
+  return {
+    currentMultiConnectionPeerState,
+    updatePeerMultiConnectionStatePartially,
+    resetPeerMultiConnectionState,
   };
 };
