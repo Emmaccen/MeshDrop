@@ -30,9 +30,7 @@ export const PageHeader = () => {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <h1 className="text-xl font-bold">MeshDrop</h1>
-          <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-            Beta
-          </span>
+
         </div>
         <div className="flex items-center gap-2">
           {!isOnFastPage && (
