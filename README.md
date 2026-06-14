@@ -1,83 +1,86 @@
 # MeshDrop
 
-MeshDrop is a browser-based file transfer solution that enables seamless, direct device-to-device file sharing without the need for installation or cloud services. Using WebRTC technology, MeshDrop allows devices on the same network to quickly and securely transfer files of any size while maintaining privacy and cross-platform compatibility.
+MeshDrop is a browser-based file transfer solution that enables seamless, direct device-to-device file sharing without the need for installation or cloud services. Using WebRTC technology, MeshDrop allows devices to quickly and securely transfer files of any size while maintaining privacy and cross-platform compatibility.
 
 ## Features
 
-- **Zero Installation**: Works directly in modern browsers with no apps to download
-- **Cross-Platform**: Share between any devices regardless of operating system
-- **Direct Transfer**: Files move directly between devices, never touching the cloud
-- **Background Processing**: Continue transfers even when navigating away (via Web Workers)
-- **Multiple File Support**: Transfer multiple files simultaneously
-- **OS Agnostic**: Works on Windows, macOS, Linux, iOS, Android, or any device with a modern browser
-- **Privacy-Focused**: No data is stored on external servers
-- **Completely Offline**: Functions without any internet connection
-- **Progressive Web App**: Install on your device for quick access
-- **Familiar Interface**: Designed like popular messaging apps for intuitive use
+- **Zero Installation**: Works directly in modern browsers with no apps to download.
+- **Fast Send Mode**: Utilizes 4 parallel WebRTC data channels for up to 4× faster transfers using an easy-to-share Room ID.
+- **Cross-Platform & Device Agnostic**: Share between Windows, macOS, Linux, iOS, Android, and even Smart TVs—basically any device with a modern browser and WebRTC support.
+- **No File Size Limits**: Leverages IndexedDB streaming to handle gigabyte-sized files without memory crashes (even on strict platforms like iOS Safari).
+- **Direct Transfer**: Files move directly between devices peer-to-peer, never touching the cloud.
+- **Silent Audio Keep-Alive**: Prevents devices from sleeping or dropping connections during large transfers using a near-silent Web Audio oscillator (bypassing flaky Wake Lock APIs).
+- **Multiple File Support**: Transfer and queue multiple files simultaneously.
+- **Privacy-Focused**: No file data is ever stored on external servers.
+- **Completely Offline Option**: Standard mode uses local QR codes, functioning entirely without an internet connection once the app is loaded.
+- **Progressive Web App**: Install on your device for quick, native-like access.
 
 ## How It Works
 
-MeshDrop uses WebRTC data channels to establish peer-to-peer connections between devices on the same network, enabling direct file transfer without intermediary servers. Files are broken down into manageable chunks (15KB) and reassembled on the receiving device, allowing for efficient transfer of files of any size.
+MeshDrop uses WebRTC data channels to establish peer-to-peer connections between devices, enabling direct file transfer without intermediary servers. 
 
-Connection between devices is established via QR code scanning, ensuring a secure handshake process even in environments with no internet access.
+- **Standard Mode (Offline)**: Connection is established via QR code scanning, ensuring a secure handshake process in environments with zero internet access.
+- **Fast Send Mode (Online Handshake)**: Devices connect via a short Room ID shared over the internet (via Firebase signaling). Once the handshake completes, the actual file transfer remains fully local and peer-to-peer, utilizing multiplexed channels for maximum speed.
+
+Files are broken down into manageable chunks, written safely to IndexedDB, and reassembled on the receiving device. This streaming architecture allows for efficient transfer of massive files without blowing up JavaScript heap memory.
 
 ## Use Cases
 
-- Transfer photos between your phone and laptop without cables or apps
-- Share documents with colleagues on the same network
-- Move files between different operating systems without compatibility issues
-- Exchange files during meetings without email or messaging services
-- Share files during outdoor activities with no internet (camping, field work, etc.)
-- Chat with nearby devices completely offline
+- Transfer massive 4K videos between your phone and laptop without cables.
+- Send media directly to your Smart TV's browser for immediate viewing.
+- Share documents with colleagues on the same network or hotspot.
+- Move files between different operating systems without compatibility issues.
+- Exchange files during meetings without relying on email limits.
+- Share files during outdoor activities with no internet (Standard mode).
 
 ## Technical Implementation
 
-MeshDrop leverages several modern web technologies:
+MeshDrop leverages a powerful stack of modern web technologies:
 
-- **WebRTC**: For direct peer-to-peer connections
-- **Web Workers**: To maintain transfers in the background
-- **Uint8Array and ArrayBuffer**: For efficient binary data handling
-- **TextEncoder/TextDecoder**: For reliable data identification
-- **Chunked File Processing**: To handle files of any size
-- **Service Workers**: For PWA functionality and background operation
-- **QR Code Generation/Scanning**: For offline device pairing
+- **WebRTC**: Multiplexed data channels for direct peer-to-peer connections.
+- **IndexedDB**: For robust chunk buffering, preventing Out-Of-Memory (OOM) crashes on iOS Safari during large transfers.
+- **Firebase Firestore**: Lightweight signaling layer for Fast Send Room ID handshakes.
+- **Web Audio API**: An imperceptible oscillator that acts as a bulletproof keep-alive mechanism to prevent browser throttling.
+- **Web Workers**: To maintain transfers and offload processing in the background.
+- **Uint8Array and ArrayBuffer**: For efficient binary data handling.
+- **Service Workers**: For PWA functionality and offline readiness.
 
 ## Future Plans
 
-- **Mesh Networking Capability**: Relay transfers through intermediate devices to extend range
-- **Resume Capability**: Continue transfers after disconnection
-- **Directory Transfer**: Support for folder structures
-- **End-to-End Encryption**: Additional security layer with optional password protection
-- **Transfer Statistics**: Real-time speed and estimated completion time display
-- **Push Notifications**: Alert users when someone wants to share files, even when the app is in the background
-- **Automatic Discovery**: Optional network-based device discovery alongside manual QR handshakes
-- **Smart TV Support**: Investigate compatibility with WebRTC-capable smart TVs for streaming media
-- **Offline Mesh Networks**: Enable multi-device sharing in completely disconnected environments
+- **Granular Transfer Progress**: Dedicated Web Worker bridge to calculate real-time transfer statistics and progress bars without blocking the main UI thread during Fast Send.
+- **Resume Capability**: Continue transfers automatically after brief network disconnections.
+- **Directory Transfer**: Support for preserving and sharing entire folder structures.
+- **End-to-End Encryption**: Additional security layer with optional password protection.
+- **Push Notifications**: Alert users when someone wants to share files, even when the app is in the background.
+- **Mesh Networking Capability**: Relay transfers through intermediate devices to extend range in offline environments.
 
 ## Getting Started
 
 1. Clone this repository
-2. Run `npm install` to install dependencies
+2. Run `npm install` (or `yarn`) to install dependencies
 3. Start the development server with `npm run dev`
-4. Open the application in browsers on multiple devices connected to the same network
-5. Use the QR code to establish a connection between devices
-6. Begin chatting and transferring files
+4. Open the application in browsers on multiple devices (phones, laptops, Smart TVs) connected to the same network or hotspot.
+5. Choose your mode:
+   - **Fast Send**: Generate a Room ID on one device and enter it on the other.
+   - **Standard**: Scan the generated QR code to connect completely offline.
+6. Begin chatting and transferring files!
 
 ## Browser Compatibility
 
 MeshDrop works on all modern browsers that support WebRTC data channels, including:
 - Chrome (Desktop & Mobile)
-- Firefox (Desktop & Mobile)
 - Safari (iOS 11+ and macOS 10.13+)
+- Firefox (Desktop & Mobile)
 - Edge (Chromium-based)
+- Smart TV Browsers (WebOS, Tizen, Android TV—with WebRTC support)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request or open an issue.
 
 ## Changelog
 
-Track new features, fixes and updates from the [changelog](https://github.com/Emmaccen/MeshDrop/blob/dev/changelog.md)
+Track new features, fixes, and updates from the [changelog](https://github.com/Emmaccen/MeshDrop/blob/dev/changelog.md)
 
 ## License
 
